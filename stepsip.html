@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Step-up SIP Calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>  
+    <style>
+        :root {
+            --primary-color: #3da59c;
+            --primary-light: #4fbeb4;
+            --primary-dark: #2d7a73;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --background-light: #f8f9fa;
+            --border-color: #e0e0e0;
+            --white: #ffffff;
+            --error-color: #dc3545;
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .calculator-container {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 2rem;
+        }
+
+        .calculator-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .calculator-header h1 {
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            margin: 0;
+        }
+
+        .input-group {
+            margin-bottom: 2rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 1rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .currency-symbol,
+        .percentage-symbol {
+            position: absolute;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            pointer-events: none;
+        }
+
+        .currency-symbol {
+            left: 1rem;
+        }
+
+        .percentage-symbol {
+            right: 1rem;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            padding-left: 2rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            -webkit-appearance: none;
+            -moz-appearance: textfield;
+            appearance: none;
+        }
+
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(61, 165, 156, 0.1);
+            outline: none;
+        }
+
+        .input-hint {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .frequency-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .frequency-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            border: 2px solid var(--primary-color);
+            background: transparent;
+            color: var(--primary-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .frequency-btn .btn-text {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .frequency-btn .btn-desc {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .frequency-btn:hover {
+            background: var(--primary-light);
+            border-color: var(--primary-light);
+            color: var(--white);
+            transform: translateY(-2px);
+        }
+
+        .frequency-btn.active {
+            background: var(--primary-color);
+            color: var(--white);
+        }
+
+        .slider-container {
+            width: 100%;
+            padding: 1rem 0;
+        }
+
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #ddd;
+            outline: none;
+            margin: 1rem 0;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            border: none;
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .results {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .result-item {
+            background: var(--background-light);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .result-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .result-item h3 {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-value {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .chart-container {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            margin: 2rem 0;
+            height: 400px;
+        }
+
+        .step-up-info {
+            background: var(--background-light);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .step-up-info h4 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .step-up-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .step-up-details p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .step-up-highlight {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .breakdown-table {
+            margin-top: 2rem;
+            background: var(--white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            display: none;
+        }
+
+        .breakdown-table h2 {
+            padding: 1.5rem;
+            background: var(--primary-color);
+            color: var(--white);
+            margin: 0;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            max-height: 500px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: right;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--background-light);
+            color: var(--text-primary);
+            font-weight: 600;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .action-button {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary-color);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .action-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .error-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--error-color);
+            color: var(--white);
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow-md);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+
+        @media screen and (max-width: 768px) {
+            .calculator-container {
+                padding: 1rem;
+            }
+
+            .results {
+                grid-template-columns: 1fr;
+            }
+
+            .step-up-details {
+                grid-template-columns: 1fr;
+            }
+
+            .frequency-selector {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="calculator-container">
+            <header class="calculator-header">
+                <h1>Step-up SIP Calculator</h1>
+            </header>
+
+            <!-- Investment Frequency Selection -->
+            <div class="input-group">
+                <label>Investment Frequency</label>
+                <div class="frequency-selector">
+                    <button class="frequency-btn active" data-freq="monthly">
+                        <span class="btn-text">Monthly</span>
+                        <span class="btn-desc">12 times a year</span>
+                    </button>
+                    <button class="frequency-btn" data-freq="annually">
+                        <span class="btn-text">Annually</span>
+                        <span class="btn-desc">Once a year</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Investment Amount Input -->
+            <div class="input-group">
+                <label for="investment">Initial Investment Amount (₹)</label>
+                <div class="input-wrapper">
+                    <span class="currency-symbol">₹</span>
+                    <input type="number" 
+                           id="investment" 
+                           value="5000" 
+                           min="100" 
+                           placeholder="Enter amount"
+                           autocomplete="off">
+                </div>
+                <div class="input-hint">Minimum investment: ₹100</div>
+            </div>
+
+            <!-- Step-up Percentage Input -->
+            <div class="input-group">
+                <label for="stepUpRate">Annual Step-up Percentage</label>
+                <div class="input-wrapper">
+                    <input type="number" 
+                           id="stepUpRate" 
+                           value="10" 
+                           min="0" 
+                           max="100" 
+                           placeholder="Enter step-up percentage"
+                           autocomplete="off">
+                    <span class="percentage-symbol">%</span>
+                </div>
+                <div class="input-hint">Range: 0% to 100% per annum</div>
+            </div>
+
+            <!-- Expected Return Rate Input -->
+            <div class="input-group">
+                <label for="returnRate">Expected Annual Return Rate</label>
+                <div class="input-wrapper">
+                    <input type="number" 
+                           id="returnRate" 
+                           value="12" 
+                           min="1" 
+                           max="30" 
+                           placeholder="Enter rate"
+                           autocomplete="off">
+                    <span class="percentage-symbol">%</span>
+                </div>
+                <div class="input-hint">Range: 1% to 30% per annum</div>
+            </div>
+
+            <!-- Investment Duration Slider -->
+            <div class="input-group">
+                <div class="time-period-header">
+                    <label for="timePeriod">
+                        Investment Duration: 
+                        <span id="timeValue" class="highlight-text">12 Months</span>
+                    </label>
+                </div>
+                <div class="slider-container">
+                    <input type="range" 
+                           id="timePeriod" 
+                           min="1" 
+                           max="360" 
+                           value="12" 
+                           class="slider">
+                    <div class="slider-labels">
+                        <span class="slider-label">1 Month</span>
+                        <span class="slider-label">180 Months</span>
+                        <span class="slider-label">360 Months</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Summary -->
+            <div class="results">
+                <div class="result-item">
+                    <h3>Total Investment</h3>
+                    <p id="totalInvestment" class="result-value">₹ 0</p>
+                    <div class="result-desc">Amount you invest</div>
+                </div>
+                <div class="result-item">
+                    <h3>Expected Returns</h3>
+                    <p id="expectedReturns" class="result-value">₹ 0</p>
+                    <div class="result-desc">Earnings on investment</div>
+                </div>
+                <div class="result-item">
+                    <h3>Total Value</h3>
+                    <p id="totalValue" class="result-value">₹ 0</p>
+                    <div class="result-desc">Investment + Returns</div>
+                </div>
+            </div>
+
+            <!-- Step-up Information -->
+            <div class="step-up-info">
+                <h4>Step-up Investment Summary</h4>
+                <div class="step-up-details">
+                    <p>Starting investment: <span class="step-up-highlight" id="startingInvestment">₹ 5,000</span></p>
+                    <p>Final investment: <span class="step-up-highlight" id="finalInvestment">₹ 0</span></p>
+                    <p>Total increase: <span class="step-up-highlight" id="totalIncrease">₹ 0</span></p>
+                    <p class="investment-growth-label" id="growthLabel">Investment amount increases by 10% every year</p>
+                </div>
+            </div>
+
+            <!-- Investment Growth Chart -->
+            <div class="chart-container">
+                <canvas id="returnsChart"></canvas>
+            </div>
+
+            <!-- Detailed Breakdown Button -->
+            <button id="viewBreakdownBtn" class="action-button">
+                View Detailed Breakdown
+                <span class="button-icon">▼</span>
+            </button>
+
+            <!-- Detailed Breakdown Table -->
+            <div class="breakdown-table" id="breakdownTable">
+                <h2>Investment Breakdown</h2>
+                <div class="table-wrapper">
+                    <table id="yearlyBreakdown">
+                        <thead>
+                            <tr>
+                                <th>Period</th>
+                                <th>Investment Amount</th>
+                                <th>Step-up Amount</th>
+                                <th>Expected Returns</th>
+                                <th>Total Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Table rows will be dynamically added here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Message Container -->
+    <div id="error-message" class="error-message"></div>
+
+    <script>
+        // Initialize state variables
+        let chart = null;
+        let currentFrequency = 'monthly';
+        let calculationTimeout = null;
+
+        // Constants for time periods and labels
+        const THIRTY_YEARS = {
+            monthly: 12 * 30,   // 360 months
+            annually: 30        // 30 years
+        };
+
+        const FREQUENCY_LABELS = {
+            monthly: 'Months',
+            annually: 'Years'
+        };
+
+        // Initialize DOM elements
+        const inputs = {
+            investment: document.getElementById('investment'),
+            returnRate: document.getElementById('returnRate'),
+            stepUpRate: document.getElementById('stepUpRate'),
+            timePeriod: document.getElementById('timePeriod'),
+            timeValue: document.getElementById('timeValue')
+        };
+
+        // Initialize frequency buttons
+        function initializeFrequencyButtons() {
+            document.querySelectorAll('.frequency-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.frequency-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    btn.classList.add('active');
+                    currentFrequency = btn.dataset.freq;
+                    updateTimeSlider();
+                    updateInvestmentLabel();
+                    debounceCalculate();
+                });
+            });
+        }
+
+        // Update investment label based on frequency
+        function updateInvestmentLabel() {
+            const label = document.querySelector('label[for="investment"]');
+            label.textContent = `Initial ${currentFrequency === 'monthly' ? 'Monthly' : 'Annual'} Investment Amount (₹)`;
+        }
+
+        // Update time slider configuration
+        function updateTimeSlider() {
+            const slider = inputs.timePeriod;
+            const maxPeriods = THIRTY_YEARS[currentFrequency];
+            
+            slider.min = 1;
+            slider.max = maxPeriods;
+            slider.value = Math.min(slider.value, maxPeriods);
+            
+            updateTimeValueDisplay();
+            updateSliderLabels();
+        }
+
+        // Update slider labels
+        function updateSliderLabels() {
+            const labels = document.querySelector('.slider-labels');
+            const unit = FREQUENCY_LABELS[currentFrequency];
+            const max = THIRTY_YEARS[currentFrequency];
+            const mid = Math.floor(max / 2);
+            
+            labels.innerHTML = `
+                <span>1 ${unit}</span>
+                <span>${mid} ${unit}</span>
+                <span>${max} ${unit}</span>
+            `;
+        }
+
+        // Format currency for Indian Rupees
+        function formatIndianCurrency(value) {
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                maximumFractionDigits: 0
+            }).format(value).replace('₹', '₹ ');
+        }
+
+        // Calculate SIP with step-up
+        function calculateSIP() {
+            const baseInvestment = parseFloat(inputs.investment.value) || 0;
+            const annualRate = parseFloat(inputs.returnRate.value) || 0;
+            const stepUpRate = parseFloat(inputs.stepUpRate.value) || 0;
+            const timePeriods = parseInt(inputs.timePeriod.value) || 0;
+
+            if (!validateInputs(baseInvestment, annualRate, stepUpRate)) return;
+
+            const result = performSIPCalculations(baseInvestment, annualRate, stepUpRate, timePeriods);
+            updateResults(result);
+            updateVisualizations(result);
+        }
+
+        // Validate inputs
+        function validateInputs(investment, returnRate, stepUpRate) {
+            if (investment < 100) {
+                showError('Investment amount must be at least ₹100');
+                return false;
+            }
+            if (returnRate < 1 || returnRate > 30) {
+                showError('Return rate must be between 1% and 30%');
+                return false;
+            }
+            if (stepUpRate < 0 || stepUpRate > 100) {
+                showError('Step-up rate must be between 0% and 100%');
+                return false;
+            }
+            return true;
+        }
+
+        // Perform SIP calculations
+        function performSIPCalculations(baseInvestment, annualRate, stepUpRate, timePeriods) {
+            let totalInvestment = 0;
+            let futureValue = 0;
+            let currentInvestment = baseInvestment;
+            
+            if (currentFrequency === 'monthly') {
+                const monthlyRate = (annualRate / 100) / 12;
+                let yearlyStepUpCount = 0;
+                
+                for (let month = 1; month <= timePeriods; month++) {
+                    if (month > 1 && (month - 1) % 12 === 0) {
+                        currentInvestment *= (1 + stepUpRate / 100);
+                    }
+                    
+                    totalInvestment += currentInvestment;
+                    futureValue = (futureValue + currentInvestment) * (1 + monthlyRate);
+                }
+            } else {
+                const annualRateDecimal = annualRate / 100;
+                
+                for (let year = 1; year <= timePeriods; year++) {
+                    if (year > 1) {
+                        currentInvestment *= (1 + stepUpRate / 100);
+                    }
+                    
+                    totalInvestment += currentInvestment;
+                    futureValue = (futureValue + currentInvestment) * (1 + annualRateDecimal);
+                }
+            }
+
+            return {
+                totalInvestment,
+                futureValue,
+                expectedReturns: futureValue - totalInvestment,
+                finalInvestmentAmount: currentInvestment
+            };
+        }
+
+        // Update results display
+        function updateResults(result) {
+            animateValue('totalInvestment', result.totalInvestment);
+            animateValue('expectedReturns', result.expectedReturns);
+            animateValue('totalValue', result.futureValue);
+            updateStepUpInfo(result);
+        }
+
+        // Update step-up information
+        function updateStepUpInfo(result) {
+            const baseInvestment = parseFloat(inputs.investment.value);
+            document.getElementById('startingInvestment').textContent = formatIndianCurrency(baseInvestment);
+            document.getElementById('finalInvestment').textContent = formatIndianCurrency(result.finalInvestmentAmount);
+            document.getElementById('totalIncrease').textContent = formatIndianCurrency(result.finalInvestmentAmount - baseInvestment);
+            document.getElementById('growthLabel').textContent = 
+                `Investment amount increases by ${inputs.stepUpRate.value}% every year`;
+        }
+
+        // Animate value changes
+        function animateValue(elementId, targetValue) {
+            const element = document.getElementById(elementId);
+            const startValue = parseFloat(element.textContent.replace(/[^0-9.-]+/g, "")) || 0;
+            const duration = 500;
+            const steps = 20;
+            const increment = (targetValue - startValue) / steps;
+            
+            let currentStep = 0;
+            const timer = setInterval(() => {
+                currentStep++;
+                const currentValue = startValue + (increment * currentStep);
+                element.textContent = formatIndianCurrency(Math.round(currentValue));
+                
+                if (currentStep >= steps) {
+                    clearInterval(timer);
+                    element.textContent = formatIndianCurrency(Math.round(targetValue));
+                }
+            }, duration / steps);
+        }
+
+        // Initialize chart
+        function initializeChart() {
+            const ctx = document.getElementById('returnsChart').getContext('2d');
+            if (chart) {
+                chart.destroy();
+            }
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Invested Amount',
+                            borderColor: '#3da59c',
+                            backgroundColor: 'rgba(61, 165, 156, 0.1)',
+                            data: []
+                        },
+                        {
+                            label: 'Total Value',
+                            borderColor: '#2d7a73',
+                            backgroundColor: 'rgba(45, 122, 115, 0.1)',
+                            data: []
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => formatIndianCurrency(value)
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update visualizations
+        function updateVisualizations(result) {
+            updateChart();
+            updateBreakdownTable(result);
+        }
+
+        // Initialize event listeners
+        function initializeListeners() {
+            inputs.investment.addEventListener('input', debounceCalculate);
+            inputs.returnRate.addEventListener('input', debounceCalculate);
+            inputs.stepUpRate.addEventListener('input', debounceCalculate);
+            inputs.timePeriod.addEventListener('input', () => {
+                updateTimeValueDisplay();
+                debounceCalculate();
+            });
+
+            document.getElementById('viewBreakdownBtn').addEventListener('click', toggleBreakdown);
+        }
+
+        // Debounce calculator
+        function debounceCalculate() {
+            clearTimeout(calculationTimeout);
+            calculationTimeout = setTimeout(calculateSIP, 300);
+        }
+
+        // Toggle breakdown table
+        function toggleBreakdown() {
+            const breakdownTable = document.getElementById('breakdownTable');
+            const btn = document.getElementById('viewBreakdownBtn');
+            const isHidden = breakdownTable.style.display === 'none' || !breakdownTable.style.display;
+            
+            breakdownTable.style.display = isHidden ? 'block' : 'none';
+            btn.innerHTML = isHidden ? 
+                'Hide Detailed Breakdown <span class="button-icon">▲</span>' :
+                'View Detailed Breakdown <span class="button-icon">▼</span>';
+                
+            if (isHidden) calculateSIP();
+        }
+
+        // Initialize calculator
+        function initializeCalculator() {
+            initializeFrequencyButtons();
+            initializeListeners();
+            updateTimeSlider();
+            calculateSIP();
+            chart = initializeChart();
+        }
+
+        // Start the calculator when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initializeCalculator);
+
+        // Handle window resize for chart
+        window.addEventListener('resize', () => {
+            if (chart) {
+                chart.resize();
+            }
+        });
+    </script>
+</body>
+</html>

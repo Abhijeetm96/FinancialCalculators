@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Modern NPS Calculator</title>
+   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+   <style>
+      /* Modern CSS Reset and Variables */
+      :root {
+         /* Core colors */
+         --primary: #3da59c;
+         --primary-light: #4fbeb4;
+         --primary-dark: #2d7a73;
+         --success: #2dd4bf;
+         --warning: #f59e0b;
+         --danger: #ef4444;
+         --background: #f8fafc;
+         --surface: #ffffff;
+         /* Text colors */
+         --text-primary: #1e293b;
+         --text-secondary: #64748b;
+         --text-light: #94a3b8;
+         /* Border and shadow */
+         --border: #e2e8f0;
+         --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+         --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+         --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+         /* Spacing */
+         --spacing-xs: 0.25rem;
+         --spacing-sm: 0.5rem;
+         --spacing-md: 1rem;
+         --spacing-lg: 1.5rem;
+         --spacing-xl: 2rem;
+         /* Border radius */
+         --radius-sm: 0.375rem;
+         --radius: 0.5rem;
+         --radius-lg: 0.75rem;
+         /* Transitions */
+         --transition: 200ms ease-in-out;
+      }
+
+      /* Base Styles */
+      * {
+         margin: 0;
+         padding: 0;
+         box-sizing: border-box;
+      }
+
+      body {
+         font-family: 'Inter', system-ui, -apple-system, sans-serif;
+         background: var(--background);
+         color: var(--text-primary);
+         line-height: 1.5;
+         -webkit-font-smoothing: antialiased;
+         padding-top: 60px;
+      }
+
+      /* Navigation */
+      .top-nav {
+         position: fixed;
+         top: 0;
+         left: 0;
+         right: 0;
+         background: var(--surface);
+         box-shadow: var(--shadow);
+         z-index: 1000;
+      }
+
+      .nav-content {
+         max-width: 1440px;
+         margin: 0 auto;
+         padding: var(--spacing-md) var(--spacing-xl);
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+      }
+
+      .nav-brand {
+         font-size: 1.25rem;
+         font-weight: 600;
+         color: var(--primary);
+      }
+
+      .time-display,
+      .user-display {
+         display: flex;
+         align-items: center;
+         gap: var(--spacing-sm);
+         color: var(--text-secondary);
+         font-size: 0.875rem;
+         padding: var(--spacing-sm) var(--spacing-md);
+         background: var(--background);
+         border-radius: var(--radius);
+      }
+
+      .time-display i,
+      .user-display i {
+         color: var(--primary);
+      }
+
+      /* Main Container */
+      .app-container {
+         max-width: 1440px;
+         margin: 1.5rem auto;
+         padding: 0 var(--spacing-xl);
+      }
+
+      /* Card Styles */
+      .card {
+         background: var(--surface);
+         border-radius: var(--radius-lg);
+         box-shadow: var(--shadow);
+         padding: var(--spacing-xl);
+         margin-bottom: var(--spacing-xl);
+      }
+
+      /* Input Grid Layout */
+      .input-grid {
+         display: grid;
+         grid-template-columns: repeat(2, 1fr);
+         gap: var(--spacing-xl);
+         margin-bottom: var(--spacing-xl);
+      }
+
+      /* Input Section */
+      .input-section h2,
+      .allocation-section h2 {
+         color: var(--text-primary);
+         font-size: 1.25rem;
+         margin-bottom: var(--spacing-lg);
+         display: flex;
+         align-items: center;
+         gap: var(--spacing-sm);
+      }
+
+      .input-section h2::before,
+      .allocation-section h2::before {
+         content: '';
+         width: 4px;
+         height: 24px;
+         background: var(--primary);
+         border-radius: var(--radius-sm);
+      }
+
+      .input-groups {
+         display: grid;
+         gap: var(--spacing-lg);
+      }
+
+      .form-group {
+         display: flex;
+         flex-direction: column;
+         gap: var(--spacing-xs);
+      }
+
+      .form-group label {
+         display: flex;
+         align-items: center;
+         gap: var(--spacing-sm);
+         color: var(--text-secondary);
+         font-weight: 500;
+      }
+
+      .form-group label i {
+         color: var(--primary);
+      }
+
+      .input-wrapper {
+         position: relative;
+         display: flex;
+         align-items: center;
+      }
+
+      .input-prefix,
+      .input-suffix {
+         position: absolute;
+         color: var(--text-secondary);
+         font-size: 0.875rem;
+         pointer-events: none;
+      }
+
+      .input-prefix {
+         left: var(--spacing-md);
+      }
+
+      .input-suffix {
+         right: var(--spacing-md);
+      }
+
+      input[type="number"] {
+         width: 100%;
+         padding: var(--spacing-md);
+         padding-left: calc(var(--spacing-md) * 2.5);
+         border: 1px solid var(--border);
+         border-radius: var(--radius);
+         font-size: 1rem;
+         transition: var(--transition);
+         -moz-appearance: textfield;
+         -webkit-appearance: textfield;
+         appearance: textfield;
+         background: var(--background);
+      }
+
+      input[type="number"]::-webkit-outer-spin-button,
+      input[type="number"]::-webkit-inner-spin-button {
+         -webkit-appearance: none;
+         margin: 0;
+      }
+
+      input[type="number"]:focus {
+         outline: none;
+         border-color: var(--primary);
+         box-shadow: 0 0 0 3px rgba(61, 165, 156, 0.1);
+      }
+
+      .input-hint {
+         font-size: 0.75rem;
+         color: var(--text-secondary);
+      }
+
+      /* Asset Allocation */
+      .allocation-sliders {
+         display: grid;
+         gap: var(--spacing-lg);
+      }
+
+      .allocation-item {
+         background: var(--background);
+         padding: var(--spacing-lg);
+         border-radius: var(--radius);
+         transition: var(--transition);
+      }
+
+      .allocation-item:hover {
+         transform: translateY(-2px);
+      }
+
+      .allocation-header {
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+         margin-bottom: var(--spacing-md);
+      }
+
+      .allocation-title {
+         color: var(--text-secondary);
+         font-weight: 500;
+      }
+
+      .allocation-value {
+         font-weight: 600;
+         color: var(--primary);
+      }
+
+      /* Slider Styles */
+      .slider-container {
+         position: relative;
+      }
+
+      input[type="range"] {
+         width: 100%;
+         height: 8px;
+         -webkit-appearance: none;
+         -moz-appearance: none;
+         appearance: none;
+         background: transparent;
+         cursor: pointer;
+      }
+
+      .slider-track {
+         position: absolute;
+         top: 50%;
+         transform: translateY(-50%);
+         height: 8px;
+         width: 100%;
+         border-radius: 4px;
+         background: linear-gradient(to right, var(--primary-light), var(--primary));
+         pointer-events: none;
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+         -webkit-appearance: none;
+         height: 20px;
+         width: 20px;
+         border-radius: 50%;
+         background: var(--surface);
+         border: 2px solid var(--primary);
+         cursor: pointer;
+         position: relative;
+         z-index: 1;
+         box-shadow: var(--shadow-sm);
+         transition: var(--transition);
+      }
+
+      input[type="range"]::-moz-range-thumb {
+         height: 20px;
+         width: 20px;
+         border-radius: 50%;
+         background: var(--surface);
+         border: 2px solid var(--primary);
+         cursor: pointer;
+         position: relative;
+         z-index: 1;
+         box-shadow: var(--shadow-sm);
+         transition: var(--transition);
+      }
+
+      /* Stats Overview */
+      .stats-grid {
+         display: grid;
+         grid-template-columns: repeat(4, 1fr);
+         gap: var(--spacing-lg);
+         padding: var(--spacing-lg);
+      }
+
+      .stat-item {
+         display: flex;
+         align-items: center;
+         gap: var(--spacing-md);
+         padding: var(--spacing-lg);
+         border-radius: var(--radius);
+         background: var(--background);
+         transition: transform 0.3s ease;
+      }
+
+      .stat-item:hover {
+         transform: translateY(-5px);
+      }
+
+      .stat-item i {
+         font-size: 2rem;
+         padding: var(--spacing-md);
+         border-radius: var(--radius);
+         color: var(--surface);
+      }
+
+      .stat-item.primary i {
+         background: var(--primary);
+      }
+
+      .stat-item.secondary i {
+         background: var(--success);
+      }
+
+      .stat-item.tertiary i {
+         background: var(--warning);
+      }
+
+      .stat-item.quaternary i {
+         background: var(--primary-dark);
+      }
+
+      .stat-content {
+         display: flex;
+         flex-direction: column;
+      }
+
+      .stat-label {
+         font-size: 0.875rem;
+         color: var(--text-secondary);
+         margin-bottom: var(--spacing-xs);
+      }
+
+      .stat-value {
+         font-size: 1.5rem;
+         font-weight: 600;
+         color: var(--text-primary);
+         margin-bottom: var(--spacing-xs);
+      }
+
+      .stat-desc {
+         font-size: 0.75rem;
+         color: var(--text-secondary);
+      }
+
+      /* Chart Section */
+      .chart-section {
+         margin-bottom: var(--spacing-xl);
+      }
+
+      .chart-container {
+         position: relative;
+         height: 400px;
+         padding: var(--spacing-md);
+      }
+
+      /* Section Headers */
+      .section-header {
+         display: flex;
+         padding: var(--spacing-md) var(--spacing-xl);
+         border-bottom: 1px solid var(--border);
+         margin-bottom: var(--spacing-lg);
+      }
+
+      .section-header h2 {
+         font-size: 1.25rem;
+         color: var(--text-primary);
+         display: flex;
+         align-items: center;
+         gap: var(--spacing-sm);
+      }
+
+      .section-header h2::before {
+         content: '';
+         width: 4px;
+         height: 24px;
+         background: var(--primary);
+         border-radius: var(--radius-sm);
+      }
+
+      /* Breakdown Table */
+      .table-container {
+         overflow-x: auto;
+         padding: var(--spacing-md);
+      }
+
+      table {
+         width: 100%;
+         border-collapse: separate;
+         border-spacing: 0;
+      }
+
+      th,
+      td {
+         padding: var(--spacing-md);
+         text-align: right;
+         border-bottom: 1px solid var(--border);
+      }
+
+      th {
+         background: var(--background);
+         color: var(--text-secondary);
+         font-weight: 600;
+         text-transform: uppercase;
+         font-size: 0.75rem;
+         letter-spacing: 0.05em;
+         position: sticky;
+         top: 0;
+         z-index: 1;
+      }
+
+      th:first-child,
+      td:first-child,
+      th:nth-child(2),
+      td:nth-child(2) {
+         text-align: center;
+      }
+
+      tr:hover td {
+         background-color: rgba(61, 165, 156, 0.05);
+      }
+
+      /* Toast Notifications */
+      .toast {
+         position: fixed;
+         bottom: var(--spacing-xl);
+         right: var(--spacing-xl);
+         background: var(--surface);
+         padding: var(--spacing-md) var(--spacing-lg);
+         border-radius: var(--radius);
+         box-shadow: var(--shadow-lg);
+         display: flex;
+         align-items: center;
+         gap: var(--spacing-sm);
+         z-index: 1000;
+         opacity: 1;
+         transition: opacity 0.3s ease;
+      }
+
+      .toast.error {
+         border-left: 4px solid var(--danger);
+      }
+
+      .toast.success {
+         border-left: 4px solid var(--success);
+      }
+
+      .toast.info {
+         border-left: 4px solid var(--primary);
+      }
+
+      /* Responsive Design */
+      @media (max-width: 1200px) {
+         .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+         }
+      }
+
+      @media (max-width: 992px) {
+         .input-grid {
+            grid-template-columns: 1fr;
+         }
+
+         .app-container {
+            padding: var(--spacing-md);
+         }
+      }
+
+      @media (max-width: 768px) {
+         body {
+            padding-top: 120px;
+         }
+
+         .nav-content {
+            flex-direction: column;
+            gap: var(--spacing-md);
+         }
+
+         .stats-grid {
+            grid-template-columns: 1fr;
+         }
+
+         .section-header {
+            flex-direction: column;
+            gap: var(--spacing-md);
+         }
+
+         .chart-container {
+            height: 300px;
+         }
+      }
+
+      @media (max-width: 480px) {
+
+
+         .time-display,
+         .user-display {
+            width: 100%;
+            justify-content: center;
+         }
+
+         .chart-container {
+            height: 250px;
+         }
+
+         .stat-item i {
+            font-size: 1.5rem;
+         }
+
+         .stat-value {
+            font-size: 1.25rem;
+         }
+      }
+
+      /* High Contrast Mode Support */
+      @media (prefers-contrast: high) {
+         :root {
+            --primary: #006666;
+            --primary-light: #008080;
+            --primary-dark: #004d4d;
+            --border: #000000;
+         }
+
+         .input-wrapper input {
+            border-width: 2px;
+         }
+
+         .slider-track {
+            background: var(--primary);
+         }
+
+         .stat-item i {
+            border: 2px solid currentColor;
+         }
+
+         th,
+         td {
+            border: 1px solid var(--border);
+         }
+      }
+
+      /* Reduced Motion Support */
+      @media (prefers-reduced-motion: reduce) {
+         * {
+            animation: none !important;
+            transition: none !important;
+         }
+
+         .stat-item:hover,
+         .allocation-item:hover {
+            transform: none !important;
+         }
+      }
+
+      /* Print Styles */
+      @media print {
+         body {
+            padding: var(--spacing-md);
+            background: var(--surface);
+         }
+
+         .top-nav {
+            position: relative;
+            box-shadow: none;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: var(--spacing-xl);
+         }
+
+         .input-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-lg);
+            page-break-inside: avoid;
+         }
+
+         .card {
+            box-shadow: none;
+            border: 1px solid var(--border);
+            break-inside: avoid;
+         }
+
+         .stats-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--spacing-md);
+            page-break-inside: avoid;
+         }
+
+         .stat-item {
+            break-inside: avoid;
+            background: transparent;
+            border: 1px solid var(--border);
+         }
+
+         .stat-item:hover {
+            transform: none;
+         }
+
+         .chart-section {
+            page-break-inside: avoid;
+            margin-bottom: var(--spacing-xl);
+         }
+
+         .chart-container {
+            height: 400px;
+            page-break-inside: avoid;
+         }
+
+         .breakdown-section {
+            page-break-inside: avoid;
+         }
+
+         .table-container {
+            overflow: visible;
+         }
+
+         table {
+            font-size: 0.9rem;
+         }
+
+         th {
+            background-color: var(--background) !important;
+            color: var(--text-primary) !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+         }
+
+         tr:hover td {
+            background-color: transparent;
+         }
+
+         .slider-container,
+         .slider-track {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+         }
+
+         /* Footer for printed page */
+         @page {
+            size: A4;
+            margin: 2cm;
+         }
+
+         @page :first {
+            margin-top: 1cm;
+         }
+
+         .app-container::after {
+            content: "Generated on: 2025-03-01 13:12:41 UTC by Abhijeetm96";
+            display: block;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: var(--spacing-xl);
+            border-top: 1px solid var(--border);
+            padding-top: var(--spacing-md);
+         }
+
+         /* Hide unnecessary elements */
+         .toast {
+            display: none !important;
+         }
+
+         /* Ensure text and borders are visible */
+         * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+         }
+
+         /* Improve table printing */
+         thead {
+            display: table-header-group;
+         }
+
+         tfoot {
+            display: table-footer-group;
+         }
+
+         tr {
+            page-break-inside: avoid;
+         }
+
+         /* Chart optimizations for printing */
+         #investmentChart {
+            max-height: 400px;
+            width: 100% !important;
+            height: auto !important;
+         }
+
+         /* Force background colors and borders in modern browsers */
+         .stat-item i {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+         }
+
+         .section-header h2::before {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+         }
+
+         /* Print-specific typography */
+         h2 {
+            font-size: 1.2rem !important;
+         }
+
+         .stat-value {
+            font-size: 1.3rem !important;
+         }
+
+         .stat-label,
+         .stat-desc {
+            font-size: 0.8rem !important;
+         }
+
+         /* Ensure all content is visible */
+         .chart-section,
+         .breakdown-section {
+            break-before: always;
+            margin-top: var(--spacing-xl);
+         }
+      }
+
+      /* Error States */
+      .error {
+         border-color: var(--danger) !important;
+      }
+
+      .error:focus {
+         box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+      }
+
+      /* Focus States for Accessibility */
+      :focus-visible {
+         outline: 2px solid var(--primary);
+         outline-offset: 2px;
+      }
+
+      /* Selection Colors */
+      ::selection {
+         background: var(--primary);
+         color: var(--surface);
+      }
+
+      /* Scrollbar Styling */
+      ::-webkit-scrollbar {
+         width: 8px;
+         height: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+         background: var(--background);
+      }
+
+      ::-webkit-scrollbar-thumb {
+         background: var(--primary);
+         border-radius: var(--radius);
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+         background: var(--primary-dark);
+      }
+   </style>
+</head>
+
+<body>
+   <!-- Navigation Bar -->
+   <nav class="top-nav">
+      <div class="nav-content">
+         <div class="nav-brand">NPS Calculator</div>
+      </div>
+   </nav>
+   <main class="app-container">
+      <!-- Input Grid Section -->
+      <div class="input-grid">
+         <!-- Investment Details Section -->
+         <section class="card input-section">
+            <h2>Investment Details</h2>
+            <div class="input-groups">
+               <div class="form-group">
+                  <label for="currentAge">
+                     <i class="fas fa-user-clock"></i>
+                     Current Age
+                  </label>
+                  <div class="input-wrapper">
+                     <input type="number" id="currentAge" value="25" min="18" max="65">
+                     <span class="input-suffix">Years</span>
+                  </div>
+                  <span class="input-hint">Age: 18-65 years</span>
+               </div>
+               <div class="form-group">
+                  <label for="retirementAge">
+                     <i class="fas fa-hourglass-half"></i>
+                     Retirement Age
+                  </label>
+                  <div class="input-wrapper">
+                     <input type="number" id="retirementAge" value="60" min="60" max="75">
+                     <span class="input-suffix">Years</span>
+                  </div>
+                  <span class="input-hint">Age: 60-75 years</span>
+               </div>
+               <div class="form-group">
+                  <label for="monthlyInvestment">
+                     <i class="fas fa-coins"></i>
+                     Monthly Investment
+                  </label>
+                  <div class="input-wrapper">
+                     <span class="input-prefix">₹</span>
+                     <input type="number" id="monthlyInvestment" value="10000" min="500">
+                  </div>
+                  <span class="input-hint">Min: ₹500 per month</span>
+               </div>
+               <div class="form-group">
+                  <label for="returnRate">
+                     <i class="fas fa-chart-line"></i>
+                     Expected Return Rate
+                  </label>
+                  <div class="input-wrapper">
+                     <input type="number" id="returnRate" value="10" min="1" max="15">
+                     <span class="input-suffix">%</span>
+                  </div>
+                  <span class="input-hint">Range: 1-15%</span>
+               </div>
+            </div>
+         </section>
+         <!-- Asset Allocation Section -->
+         <section class="card allocation-section">
+            <h2>Asset Allocation</h2>
+            <div class="allocation-sliders">
+               <div class="allocation-item">
+                  <div class="allocation-header">
+                     <span class="allocation-title">Equity (E)</span>
+                     <span class="allocation-value" id="equityPercent">75%</span>
+                  </div>
+                  <div class="slider-container">
+                     <input type="range" id="equityAllocation" min="0" max="75" value="75">
+                     <div class="slider-track"></div>
+                  </div>
+               </div>
+               <div class="allocation-item">
+                  <div class="allocation-header">
+                     <span class="allocation-title">Corporate Bonds (C)</span>
+                     <span class="allocation-value" id="corporatePercent">15%</span>
+                  </div>
+                  <div class="slider-container">
+                     <input type="range" id="corporateAllocation" min="0" max="100" value="15">
+                     <div class="slider-track"></div>
+                  </div>
+               </div>
+               <div class="allocation-item">
+                  <div class="allocation-header">
+                     <span class="allocation-title">Government Securities (G)</span>
+                     <span class="allocation-value" id="govtPercent">10%</span>
+                  </div>
+                  <div class="slider-container">
+                     <input type="range" id="govtAllocation" min="0" max="100" value="10">
+                     <div class="slider-track"></div>
+                  </div>
+               </div>
+            </div>
+         </section>
+      </div>
+      <!-- Stats Overview -->
+      <div class="stats-overview">
+         <div class="card stats-grid">
+            <div class="stat-item primary">
+               <i class="fas fa-wallet"></i>
+               <div class="stat-content">
+                  <span class="stat-label">Total Corpus</span>
+                  <span class="stat-value" id="totalCorpus">₹0</span>
+                  <span class="stat-desc">at retirement</span>
+               </div>
+            </div>
+            <div class="stat-item secondary">
+               <i class="fas fa-hand-holding-usd"></i>
+               <div class="stat-content">
+                  <span class="stat-label">Monthly Pension</span>
+                  <span class="stat-value" id="monthlyPension">₹0</span>
+                  <span class="stat-desc">estimated</span>
+               </div>
+            </div>
+            <div class="stat-item tertiary">
+               <i class="fas fa-piggy-bank"></i>
+               <div class="stat-content">
+                  <span class="stat-label">Total Investment</span>
+                  <span class="stat-value" id="totalInvestment">₹0</span>
+                  <span class="stat-desc">amount invested</span>
+               </div>
+            </div>
+            <div class="stat-item quaternary">
+               <i class="fas fa-chart-line"></i>
+               <div class="stat-content">
+                  <span class="stat-label">Total Returns</span>
+                  <span class="stat-value" id="totalReturns">₹0</span>
+                  <span class="stat-desc">earnings on investment</span>
+               </div>
+            </div>
+         </div>
+      </div>
+      <!-- Chart Section -->
+      <section class="card chart-section">
+         <div class="section-header">
+            <h2>Investment Growth Chart</h2>
+         </div>
+         <div class="chart-container">
+            <canvas id="investmentChart"></canvas>
+         </div>
+      </section>
+      <!-- Breakdown Table Section -->
+      <section class="card breakdown-section">
+         <div class="section-header">
+            <h2>Yearly Breakdown</h2>
+         </div>
+         <div class="table-container">
+            <table id="yearlyBreakdown">
+               <thead>
+                  <tr>
+                     <th>Year</th>
+                     <th>Age</th>
+                     <th>Investment</th>
+                     <th>Returns</th>
+                     <th>Balance</th>
+                  </tr>
+               </thead>
+               <tbody></tbody>
+            </table>
+         </div>
+      </section>
+   </main>
+   <script>
+      // Global constants
+      const CURRENT_TIME = "2025-03-01 13:14:17";
+      const CURRENT_USER = "Abhijeetm96";
+      const MIN_MONTHLY_INVESTMENT = 500;
+      const MAX_EQUITY_ALLOCATION = 75;
+      const ANNUITY_PERCENTAGE = 0.4;
+      const ANNUITY_RATE = 0.06;
+
+      // Global variables
+      let chart = null;
+      let calculationTimeout = null;
+
+      // Initialize calculator on DOM load
+      document.addEventListener('DOMContentLoaded', () => {
+         initializeDateTime();
+         initializeUserInfo();
+         initializeInputListeners();
+         initializeChartResponsiveness();
+         setupChartDefaults();
+         loadState();
+         updateAllocations();
+         calculateNPS();
+      });
+
+      // Initialize date and time display
+      function initializeDateTime() {
+         const timeDisplay = document.querySelector('.time-display span');
+         if (timeDisplay) {
+            timeDisplay.textContent = CURRENT_TIME + ' UTC';
+         }
+      }
+
+      // Initialize user information
+      function initializeUserInfo() {
+         const userDisplay = document.querySelector('.user-display span');
+         if (userDisplay) {
+            userDisplay.textContent = CURRENT_USER;
+         }
+      }
+
+      // Setup Chart.js defaults
+      function setupChartDefaults() {
+         if (typeof Chart !== 'undefined') {
+            Chart.defaults.font.family = "'Inter', system-ui, -apple-system, sans-serif";
+            Chart.defaults.font.size = 12;
+            Chart.defaults.color = '#64748b';
+            Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(255, 255, 255, 0.95)';
+            Chart.defaults.plugins.tooltip.titleColor = '#1e293b';
+            Chart.defaults.plugins.tooltip.bodyColor = '#1e293b';
+            Chart.defaults.plugins.tooltip.borderColor = '#e2e8f0';
+            Chart.defaults.plugins.tooltip.borderWidth = 1;
+            Chart.defaults.plugins.tooltip.padding = 12;
+            Chart.defaults.plugins.tooltip.boxPadding = 6;
+         }
+      }
+
+      // Input references
+      const inputs = {
+         currentAge: document.getElementById('currentAge'),
+         retirementAge: document.getElementById('retirementAge'),
+         monthlyInvestment: document.getElementById('monthlyInvestment'),
+         returnRate: document.getElementById('returnRate'),
+         equityAllocation: document.getElementById('equityAllocation'),
+         corporateAllocation: document.getElementById('corporateAllocation'),
+         govtAllocation: document.getElementById('govtAllocation')
+      };
+
+      // Initialize input listeners
+      function initializeInputListeners() {
+         // Age inputs
+         inputs.currentAge.addEventListener('input', (e) => {
+            validateAge(e.target, 18, 65, 'Current age');
+            debounceCalculate();
+         });
+
+         inputs.retirementAge.addEventListener('input', (e) => {
+            validateAge(e.target, 60, 75, 'Retirement age');
+            debounceCalculate();
+         });
+
+         // Monthly investment input
+         inputs.monthlyInvestment.addEventListener('input', (e) => {
+            validateInvestment(e.target);
+            debounceCalculate();
+         });
+
+         // Return rate input
+         inputs.returnRate.addEventListener('input', (e) => {
+            validateReturnRate(e.target);
+            debounceCalculate();
+         });
+
+         // Asset allocation sliders
+         inputs.equityAllocation.addEventListener('input', updateAllocations);
+         inputs.corporateAllocation.addEventListener('input', updateAllocations);
+         inputs.govtAllocation.addEventListener('input', updateAllocations);
+      }
+
+      // Initialize chart responsiveness
+      function initializeChartResponsiveness() {
+         const chartContainer = document.querySelector('.chart-container');
+         if (chartContainer && typeof ResizeObserver !== 'undefined') {
+            const resizeObserver = new ResizeObserver(entries => {
+               if (chart) {
+                  chart.resize();
+               }
+            });
+            resizeObserver.observe(chartContainer);
+         }
+      }
+
+      // Validation functions
+      function validateAge(input, min, max, label) {
+         const value = parseInt(input.value);
+         if (isNaN(value) || value < min || value > max) {
+            showToast(`${label} must be between ${min} and ${max} years`, 'error');
+            input.classList.add('error');
+            return false;
+         }
+         input.classList.remove('error');
+
+         // Additional validation for retirement age
+         if (label === 'Retirement age') {
+            const currentAge = parseInt(inputs.currentAge.value);
+            if (value <= currentAge) {
+               showToast('Retirement age must be greater than current age', 'error');
+               input.classList.add('error');
+               return false;
+            }
+         }
+
+         return true;
+      }
+
+      function validateInvestment(input) {
+         const value = parseFloat(input.value);
+         if (isNaN(value) || value < MIN_MONTHLY_INVESTMENT) {
+            showToast(`Monthly investment must be at least ₹${MIN_MONTHLY_INVESTMENT}`, 'error');
+            input.classList.add('error');
+            return false;
+         }
+         input.classList.remove('error');
+         return true;
+      }
+
+      function validateReturnRate(input) {
+         const value = parseFloat(input.value);
+         if (isNaN(value) || value < 1 || value > 15) {
+            showToast('Return rate must be between 1% and 15%', 'error');
+            input.classList.add('error');
+            return false;
+         }
+         input.classList.remove('error');
+         return true;
+      }
+
+      // Show toast notifications
+      function showToast(message, type = 'info') {
+         const existingToast = document.querySelector('.toast');
+         if (existingToast) {
+            existingToast.remove();
+         }
+
+         const toast = document.createElement('div');
+         toast.className = `toast ${type}`;
+         toast.innerHTML = `
+         <i class="fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+         <span>${message}</span>
+         `;
+         document.body.appendChild(toast);
+
+         setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+         }, 3000);
+      }
+
+      // Update asset allocations
+      function updateAllocations() {
+         let equity = parseInt(inputs.equityAllocation.value);
+         let corporate = parseInt(inputs.corporateAllocation.value);
+         let govt = parseInt(inputs.govtAllocation.value);
+
+         // Ensure maximum equity is 75%
+         equity = Math.min(equity, MAX_EQUITY_ALLOCATION);
+
+         // Adjust allocations to ensure total is 100%
+         const total = equity + corporate + govt;
+         if (total !== 100) {
+            const nonEquity = 100 - equity;
+            const corpRatio = corporate / (corporate + govt) || 0.5;
+            corporate = Math.round(nonEquity * corpRatio);
+            govt = 100 - equity - corporate;
+         }
+
+         // Update sliders and displays
+         inputs.equityAllocation.value = equity;
+         inputs.corporateAllocation.value = corporate;
+         inputs.govtAllocation.value = govt;
+
+         // Update percentage displays
+         updateAllocationDisplay('equityPercent', equity);
+         updateAllocationDisplay('corporatePercent', corporate);
+         updateAllocationDisplay('govtPercent', govt);
+
+         // Update slider tracks
+         updateSliderTrack(inputs.equityAllocation);
+         updateSliderTrack(inputs.corporateAllocation);
+         updateSliderTrack(inputs.govtAllocation);
+
+         debounceCalculate();
+      }
+
+      function updateAllocationDisplay(elementId, value) {
+         const element = document.getElementById(elementId);
+         if (element) {
+            animateValue(element, parseInt(element.textContent), value, '%');
+         }
+      }
+
+      function updateSliderTrack(slider) {
+         const percentage = (slider.value - slider.min) / (slider.max - slider.min) * 100;
+         const track = slider.nextElementSibling;
+         if (track) {
+            track.style.width = `${percentage}%`;
+         }
+      }
+
+      // Debounce calculator
+      function debounceCalculate() {
+         clearTimeout(calculationTimeout);
+         calculationTimeout = setTimeout(calculateNPS, 300);
+      }
+
+      // Format currency
+      function formatIndianCurrency(value) {
+         return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            maximumFractionDigits: 0,
+            minimumFractionDigits: 0
+         }).format(value);
+      }
+
+      // Animate value changes
+      function animateValue(element, start, end, suffix = '') {
+         if (!element) return;
+
+         const duration = 500;
+         const steps = 20;
+         const increment = (end - start) / steps;
+         let currentStep = 0;
+
+         function updateValue() {
+            currentStep++;
+            const currentValue = start + (increment * currentStep);
+
+            element.textContent = suffix === '' ?
+               formatIndianCurrency(Math.round(currentValue)) :
+               Math.round(currentValue) + suffix;
+
+            if (currentStep < steps) {
+               requestAnimationFrame(updateValue);
+            } else {
+               element.textContent = suffix === '' ?
+                  formatIndianCurrency(Math.round(end)) :
+                  Math.round(end) + suffix;
+            }
+         }
+
+         requestAnimationFrame(updateValue);
+      }
+
+      // Calculate NPS
+      function calculateNPS() {
+         const currentAge = parseInt(inputs.currentAge.value);
+         const retirementAge = parseInt(inputs.retirementAge.value);
+         const monthlyInvestment = parseFloat(inputs.monthlyInvestment.value);
+         const returnRate = parseFloat(inputs.returnRate.value);
+
+         if (!validateInputs(currentAge, retirementAge, monthlyInvestment, returnRate)) {
+            return;
+         }
+
+         const years = retirementAge - currentAge;
+         const monthlyRate = returnRate / 12 / 100;
+         const months = years * 12;
+
+         // Calculate corpus
+         const totalCorpus = monthlyInvestment * ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate) * (1 + monthlyRate);
+         const totalInvestment = monthlyInvestment * months;
+         const totalReturns = totalCorpus - totalInvestment;
+         const monthlyPension = (totalCorpus * ANNUITY_PERCENTAGE * ANNUITY_RATE) / 12;
+
+         // Update displays
+         const totalCorpusElement = document.getElementById('totalCorpus');
+         const monthlyPensionElement = document.getElementById('monthlyPension');
+         const totalInvestmentElement = document.getElementById('totalInvestment');
+         const totalReturnsElement = document.getElementById('totalReturns');
+
+         if (totalCorpusElement) animateValue(totalCorpusElement, parseInt(totalCorpusElement.textContent.replace(/[^0-9]/g, '')), totalCorpus);
+         if (monthlyPensionElement) animateValue(monthlyPensionElement, parseInt(monthlyPensionElement.textContent.replace(/[^0-9]/g, '')), monthlyPension);
+         if (totalInvestmentElement) animateValue(totalInvestmentElement, parseInt(totalInvestmentElement.textContent.replace(/[^0-9]/g, '')), totalInvestment);
+         if (totalReturnsElement) animateValue(totalReturnsElement, parseInt(totalReturnsElement.textContent.replace(/[^0-9]/g, '')), totalReturns);
+
+         // Update visualizations
+         const yearlyData = calculateYearlyData(monthlyInvestment, returnRate, years);
+         updateChart(yearlyData);
+         updateTable(yearlyData);
+
+         // Save state
+         saveState();
+      }
+
+      // Validate all inputs
+      function validateInputs(currentAge, retirementAge, monthlyInvestment, returnRate) {
+         let isValid = true;
+
+         if (!validateAge(inputs.currentAge, 18, 65, 'Current age')) isValid = false;
+         if (!validateAge(inputs.retirementAge, 60, 75, 'Retirement age')) isValid = false;
+         if (!validateInvestment(inputs.monthlyInvestment)) isValid = false;
+         if (!validateReturnRate(inputs.returnRate)) isValid = false;
+
+         return isValid;
+      }
+
+      // Calculate yearly data
+      function calculateYearlyData(monthlyInvestment, returnRate, totalYears) {
+         const yearlyData = {
+            labels: [],
+            balances: [],
+            investments: [],
+            returns: []
+         };
+
+         const yearlyInvestment = monthlyInvestment * 12;
+         const yearlyRate = returnRate / 100;
+         let balance = 0;
+         let totalInvestment = 0;
+
+         for (let year = 1; year <= totalYears; year++) {
+            totalInvestment += yearlyInvestment;
+            const investmentReturn = balance * yearlyRate;
+            balance += yearlyInvestment + investmentReturn;
+
+            yearlyData.labels.push(`Year ${year}`);
+            yearlyData.investments.push(totalInvestment);
+            yearlyData.returns.push(investmentReturn);
+            yearlyData.balances.push(balance);
+         }
+
+         return yearlyData;
+      }
+
+      // Update chart
+      function updateChart(data) {
+         const ctx = document.getElementById('investmentChart');
+         if (!ctx) return;
+
+         if (chart) {
+            chart.destroy();
+         }
+
+         chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+               labels: data.labels,
+               datasets: [
+                  {
+                     label: 'Total Corpus',
+                     data: data.balances,
+                     borderColor: '#3da59c',
+                     backgroundColor: 'rgba(61, 165, 156, 0.1)',
+                     fill: true,
+                     tension: 0.4
+                  },
+                  {
+                     label: 'Total Investment',
+                     data: data.investments,
+                     borderColor: '#2dd4bf',
+                     backgroundColor: 'rgba(45, 212, 191, 0.1)',
+                     fill: true,
+                     tension: 0.4
+                  }
+               ]
+            },
+            options: {
+               responsive: true,
+               maintainAspectRatio: false,
+               plugins: {
+                  legend: {
+                     position: 'bottom',
+                     labels: {
+                        usePointStyle: true,
+                        padding: 20,
+                        font: { size: 12 }
+                     }
+                  },
+                  tooltip: {
+                     mode: 'index',
+                     intersect: false,
+                     callbacks: {
+                        label: function (context) {
+                           return `${context.dataset.label}: ${formatIndianCurrency(context.parsed.y)}`;
+                        }
+                     }
+                  }
+               },
+               scales: {
+                  x: {
+                     grid: { display: false }
+                  },
+                  y: {
+                     beginAtZero: true,
+                     ticks: {
+                        callback: value => formatIndianCurrency(value)
+                     }
+                  }
+               }
+            }
+         });
+      }
+
+      // Update table
+      function updateTable(data) {
+         const tbody = document.querySelector('#yearlyBreakdown tbody');
+         if (!tbody) return;
+
+         tbody.innerHTML = '';
+         data.labels.forEach((label, i) => {
+            const row = document.createElement('tr');
+            const year = i + 1;
+            row.innerHTML = `
+             <td class="text-center">${year}</td>
+             <td class="text-center">${parseInt(inputs.currentAge.value) + year}</td>
+             <td>${formatIndianCurrency(data.investments[i])}</td>
+             <td>${formatIndianCurrency(data.returns[i])}</td>
+             <td>${formatIndianCurrency(data.balances[i])}</td>
+         `;
+            tbody.appendChild(row);
+         });
+      }
+
+      // Save state to localStorage
+      function saveState() {
+         const state = {
+            currentAge: inputs.currentAge.value,
+            retirementAge: inputs.retirementAge.value,
+            monthlyInvestment: inputs.monthlyInvestment.value,
+            returnRate: inputs.returnRate.value,
+            equityAllocation: inputs.equityAllocation.value,
+            corporateAllocation: inputs.corporateAllocation.value,
+            govtAllocation: inputs.govtAllocation.value,
+            timestamp: "2025-03-01 15:14:40",
+            user: "Abhijeetm96"
+         };
+
+         try {
+            localStorage.setItem('npsCalculatorState', JSON.stringify(state));
+         } catch (error) {
+            console.error('Error saving state:', error);
+            showToast('Unable to save calculator state', 'error');
+         }
+      }
+
+      // Load state from localStorage
+      function loadState() {
+         try {
+            const savedState = localStorage.getItem('npsCalculatorState');
+            if (savedState) {
+               const state = JSON.parse(savedState);
+
+               // Verify if the saved state is from the same user
+               if (state.user === "Abhijeetm96") {
+                  Object.keys(state).forEach(key => {
+                     if (inputs[key]) {
+                        inputs[key].value = state[key];
+                     }
+                  });
+                  updateAllocations();
+                  calculateNPS();
+                  showToast('Previous calculation loaded', 'success');
+               }
+            }
+         } catch (error) {
+            console.error('Error loading state:', error);
+            showToast('Unable to load previous calculation', 'error');
+         }
+      }
+
+      // Reset calculator
+      function resetCalculator() {
+         const defaultValues = {
+            currentAge: '25',
+            retirementAge: '60',
+            monthlyInvestment: '10000',
+            returnRate: '10',
+            equityAllocation: '75',
+            corporateAllocation: '15',
+            govtAllocation: '10'
+         };
+
+         Object.keys(defaultValues).forEach(key => {
+            if (inputs[key]) {
+               inputs[key].value = defaultValues[key];
+            }
+         });
+
+         updateAllocations();
+         calculateNPS();
+         showToast('Calculator reset to default values', 'info');
+      }
+
+      // Handle window resize
+      window.addEventListener('resize', () => {
+         if (chart) {
+            const resizeTimeout = setTimeout(() => {
+               chart.resize();
+               clearTimeout(resizeTimeout);
+            }, 100);
+         }
+      });
+
+      // Handle errors globally
+      window.addEventListener('error', (event) => {
+         console.error('An error occurred:', event.error);
+         showToast('An unexpected error occurred. Please try again.', 'error');
+      });
+
+      // Handle unhandled promise rejections
+      window.addEventListener('unhandledrejection', (event) => {
+         console.error('Promise rejection:', event.reason);
+         showToast('An unexpected error occurred. Please try again.', 'error');
+      });
+
+      // Update timestamp periodically
+      function updateTimestamp() {
+         let currentTime = new Date("2025-03-01 15:14:40");
+
+         setInterval(() => {
+            currentTime = new Date(currentTime.getTime() + 1000);
+            const timeString = currentTime.toISOString()
+               .replace('T', ' ')
+               .slice(0, 19);
+
+            const timeDisplay = document.querySelector('.time-display span');
+            if (timeDisplay) {
+               timeDisplay.textContent = timeString + ' UTC';
+            }
+         }, 1000);
+      }
+
+      // Initialize everything when the page loads
+      document.addEventListener('DOMContentLoaded', () => {
+         initializeDateTime();
+         initializeUserInfo();
+         initializeInputListeners();
+         initializeChartResponsiveness();
+         setupChartDefaults();
+         loadState();
+         updateAllocations();
+         calculateNPS();
+         updateTimestamp();
+      });
+   </script>
+</body>
+
+</html>
