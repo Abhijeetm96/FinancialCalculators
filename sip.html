@@ -619,427 +619,282 @@
     <div id="error-message" class="error-message"></div>
 
     <script>
-        // Initialize global variables
-        let chart = null;
-        let currentFrequency = 'monthly';
-        let calculationTimeout = null;
-
-        // Constants
-        const THIRTY_YEARS = {
-            monthly: 12 * 30,   // 360 months
-            annually: 30        // 30 years
+        // Initialize constants
+        const CONFIG = {
+            FREQUENCIES: {
+                monthly: { maxPeriods: 360, label: 'Months', rateDiv: 12 },
+                annually: { maxPeriods: 30, label: 'Years', rateDiv: 1 }
+            },
+            LIMITS: {
+                minInvestment: 100,
+                minRate: 1,
+                maxRate: 30,
+                chartPoints: 20
+            },
+            COLORS: {
+                investment: '#3da59c',
+                returns: '#2d7a73'
+            }
         };
 
-        const FREQUENCY_LABELS = {
-            monthly: 'Months',
-            annually: 'Years'
+        // State management
+        const state = {
+            chart: null,
+            currentFreq: 'monthly'
         };
 
-        // Initialize DOM elements
-        const inputs = {
-            investment: document.getElementById('investment'),
-            returnRate: document.getElementById('returnRate'),
-            timePeriod: document.getElementById('timePeriod'),
-            timeValue: document.getElementById('timeValue')
+        // DOM Elements
+        const UI = {
+            inputs: {
+                investment: document.getElementById('investment'),
+                returnRate: document.getElementById('returnRate'),
+                timePeriod: document.getElementById('timePeriod'),
+                timeValue: document.getElementById('timeValue')
+            },
+            displays: {
+                totalInvestment: document.getElementById('totalInvestment'),
+                expectedReturns: document.getElementById('expectedReturns'),
+                totalValue: document.getElementById('totalValue')
+            },
+            elements: {
+                breakdownTable: document.getElementById('breakdownTable'),
+                breakdownBtn: document.getElementById('viewBreakdownBtn'),
+                chartCanvas: document.getElementById('returnsChart'),
+                freqButtons: document.querySelectorAll('.frequency-btn')
+            }
         };
 
-        // Initialize frequency buttons
-        function initializeFrequencyButtons() {
-            document.querySelectorAll('.frequency-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.frequency-btn').forEach(b => {
-                        b.classList.remove('active');
-                        b.style.transform = 'scale(1)';
-                    });
-                    btn.classList.add('active');
-                    btn.style.transform = 'scale(1.05)';
-                    setTimeout(() => btn.style.transform = 'scale(1)', 200);
+        // Utility functions
+        const utils = {
+            formatCurrency: (value) => {
+                return new Intl.NumberFormat('en-IN', {
+                    style: 'currency',
+                    currency: 'INR',
+                    maximumFractionDigits: 0
+                }).format(value).replace('₹', '₹ ');
+            },
 
-                    currentFrequency = btn.dataset.freq;
-                    updateInvestmentLabel();
-                    updateTimeSlider();
-                    calculateSIP(); // Immediate calculation
+            validateInputs: () => {
+                const values = {
+                    investment: parseFloat(UI.inputs.investment.value) || 0,
+                    rate: parseFloat(UI.inputs.returnRate.value) || 0,
+                    periods: parseInt(UI.inputs.timePeriod.value) || 0
+                };
+
+                return {
+                    isValid: values.investment >= CONFIG.LIMITS.minInvestment &&
+                        values.rate >= CONFIG.LIMITS.minRate &&
+                        values.rate <= CONFIG.LIMITS.maxRate,
+                    values
+                };
+            },
+
+            calculateFutureValue: (investment, rate, periods) => {
+                const rateDiv = CONFIG.FREQUENCIES[state.currentFreq].rateDiv;
+                const r = (rate / 100) / rateDiv;
+                return investment * ((Math.pow(1 + r, periods) - 1) / r) * (1 + r);
+            }
+        };
+
+        // Core calculation functions
+        const calculator = {
+            computeSIP: () => {
+                const { isValid, values } = utils.validateInputs();
+                if (!isValid) return null;
+
+                const { investment, rate, periods } = values;
+                const totalInvestment = investment * periods;
+                const futureValue = utils.calculateFutureValue(investment, rate, periods);
+                const returns = futureValue - totalInvestment;
+
+                return {
+                    investment,
+                    rate,
+                    periods,
+                    totalInvestment,
+                    futureValue,
+                    returns
+                };
+            },
+
+            generateChartData: (base) => {
+                if (!base) return null;
+
+                const step = Math.ceil(base.periods / CONFIG.LIMITS.chartPoints);
+                const data = {
+                    labels: [],
+                    invested: [],
+                    total: []
+                };
+
+                for (let i = 1; i <= base.periods; i += step) {
+                    data.labels.push(i);
+                    data.invested.push(base.investment * i);
+                    data.total.push(utils.calculateFutureValue(base.investment, base.rate, i));
+                }
+
+                return data;
+            }
+        };
+
+        // UI update functions
+        const updateUI = {
+            displayValues: (results) => {
+                if (!results) return;
+
+                Object.entries(UI.displays).forEach(([key, element]) => {
+                    const value = results[key === 'totalInvestment' ? 'totalInvestment' :
+                        key === 'expectedReturns' ? 'returns' : 'futureValue'];
+                    element.textContent = utils.formatCurrency(Math.round(value));
                 });
-            });
-        }
+            },
 
-        // Update time slider based on frequency
-        function updateTimeSlider() {
-            const slider = inputs.timePeriod;
-            const maxPeriods = THIRTY_YEARS[currentFrequency];
+            updateTimeLabel: () => {
+                const periods = UI.inputs.timePeriod.value;
+                const label = CONFIG.FREQUENCIES[state.currentFreq].label;
+                UI.inputs.timeValue.textContent = `${periods} ${label}`;
+            },
 
-            slider.min = 1;
-            slider.max = maxPeriods;
-            slider.value = Math.min(slider.value, maxPeriods);
+            updateChart: (data) => {
+                if (!data) return;
 
-            updateTimeValueDisplay();
-            updateSliderLabels();
-        }
+                if (state.chart) state.chart.destroy();
 
-        // Update slider labels
-        function updateSliderLabels() {
-            const labels = document.querySelector('.slider-labels');
-            const unit = FREQUENCY_LABELS[currentFrequency];
-            const max = THIRTY_YEARS[currentFrequency];
-            const mid = Math.floor(max / 2);
+                state.chart = new Chart(UI.elements.chartCanvas.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: data.labels.map(l => `${l} ${CONFIG.FREQUENCIES[state.currentFreq].label}`),
+                        datasets: [
+                            {
+                                label: 'Invested Amount',
+                                data: data.invested,
+                                borderColor: CONFIG.COLORS.investment,
+                                backgroundColor: `${CONFIG.COLORS.investment}1a`,
+                                fill: true
+                            },
+                            {
+                                label: 'Total Value',
+                                data: data.total,
+                                borderColor: CONFIG.COLORS.returns,
+                                backgroundColor: `${CONFIG.COLORS.returns}1a`,
+                                fill: true
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => {
+                                        return `${context.dataset.label}: ${utils.formatCurrency(context.parsed.y)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { callback: value => utils.formatCurrency(value) }
+                            }
+                        }
+                    }
+                });
+            },
 
-            labels.innerHTML = `
-        <span>1 ${unit}</span>
-        <span>${mid} ${unit}</span>
-        <span>${max} ${unit}</span>
-    `;
-        }
+            updateTable: (data) => {
+                if (!data || !UI.elements.breakdownTable) return;
 
-        // Update time value display
-        function updateTimeValueDisplay() {
-            const currentValue = inputs.timePeriod.value;
-            const label = FREQUENCY_LABELS[currentFrequency];
-            inputs.timeValue.textContent = `${currentValue} ${label}`;
-            inputs.timeValue.classList.add('animate-in');
-            setTimeout(() => inputs.timeValue.classList.remove('animate-in'), 300);
-        }
+                const tbody = UI.elements.breakdownTable.querySelector('tbody');
+                if (!tbody) return;
 
-        // Initialize input event listeners
-        function initializeInputListeners() {
-            inputs.investment.addEventListener('input', (e) => {
-                const value = parseFloat(e.target.value);
-                if (isNaN(value) || value < 100) {
-                    e.target.classList.add('error');
-                    showError('Investment amount must be at least ₹100');
-                } else {
-                    e.target.classList.remove('error');
-                    hideError();
-                    debounceCalculate();
-                }
-            });
-
-            inputs.returnRate.addEventListener('input', (e) => {
-                const value = parseFloat(e.target.value);
-                if (isNaN(value) || value < 1 || value > 30) {
-                    e.target.classList.add('error');
-                    showError('Return rate must be between 1% and 30%');
-                } else {
-                    e.target.classList.remove('error');
-                    hideError();
-                    debounceCalculate();
-                }
-            });
-
-            inputs.timePeriod.addEventListener('input', () => {
-                updateTimeValueDisplay();
-                calculateSIP(); // Immediate calculation
-            });
-        }
-
-        // Error handling functions
-        function showError(message) {
-            const errorDiv = document.getElementById('error-message') || createErrorElement();
-            errorDiv.textContent = message;
-            errorDiv.style.opacity = '1';
-            setTimeout(() => {
-                errorDiv.style.opacity = '0';
-            }, 3000);
-        }
-
-        function hideError() {
-            const errorDiv = document.getElementById('error-message');
-            if (errorDiv) {
-                errorDiv.style.opacity = '0';
+                tbody.innerHTML = data.labels.map((period, i) => `
+            <tr>
+                <td class="text-center">
+                    <span class="period-number">${period}</span>
+                    <span class="period-label">${CONFIG.FREQUENCIES[state.currentFreq].label}</span>
+                </td>
+                <td class="amount-cell">${utils.formatCurrency(data.invested[i])}</td>
+                <td class="amount-cell">${utils.formatCurrency(data.total[i] - data.invested[i])}</td>
+                <td class="amount-cell">${utils.formatCurrency(data.total[i])}</td>
+            </tr>
+        `).join('');
             }
-        }
+        };
 
-        function createErrorElement() {
-            const errorDiv = document.createElement('div');
-            errorDiv.id = 'error-message';
-            errorDiv.className = 'error-message';
-            document.querySelector('.calculator-container').appendChild(errorDiv);
-            return errorDiv;
-        }
+        // Event handlers
+        const handlers = {
+            calculate: () => {
+                const results = calculator.computeSIP();
+                if (!results) return;
 
-        // Debounce calculator function
-        function debounceCalculate() {
-            clearTimeout(calculationTimeout);
-            calculationTimeout = setTimeout(calculateSIP, 300);
-        }
+                const chartData = calculator.generateChartData(results);
+                updateUI.displayValues(results);
+                updateUI.updateChart(chartData);
+                updateUI.updateTable(chartData);
+            },
 
-        // Update investment label
-        function updateInvestmentLabel() {
-            const label = document.querySelector('label[for="investment"]');
-            const frequencyMap = {
-                monthly: 'Monthly',
-                annually: 'Annual'
-            };
-            label.textContent = `${frequencyMap[currentFrequency]} Investment Amount (₹)`;
-        }
+            frequencyChange: (freq) => {
+                state.currentFreq = freq;
+                const maxPeriods = CONFIG.FREQUENCIES[freq].maxPeriods;
 
-        // Format currency for Indian Rupees
-        function formatIndianCurrency(value) {
-            return new Intl.NumberFormat('en-IN', {
-                style: 'currency',
-                currency: 'INR',
-                maximumFractionDigits: 0,
-                minimumFractionDigits: 0
-            }).format(value).replace('₹', '₹ ');
-        }
+                UI.inputs.timePeriod.max = maxPeriods;
+                UI.inputs.timePeriod.value = Math.min(UI.inputs.timePeriod.value, maxPeriods);
 
-        // SIP Calculation
-        function calculateSIP() {
-            const investment = parseFloat(inputs.investment.value) || 0;
-            const annualRate = parseFloat(inputs.returnRate.value) || 0;
-            const timePeriods = parseInt(inputs.timePeriod.value) || 0;
+                updateUI.updateTimeLabel();
+                handlers.calculate();
+            },
 
-            // Validate inputs
-            if (investment < 100 || annualRate < 1 || annualRate > 30) {
-                return;
-            }
+            toggleBreakdown: () => {
+                const isHidden = UI.elements.breakdownTable.style.display === 'none' ||
+                    !UI.elements.breakdownTable.style.display;
 
-            let totalInvestment = investment * timePeriods;
-            let futureValue;
-
-            if (currentFrequency === 'monthly') {
-                const monthlyRate = (annualRate / 100) / 12;
-                futureValue = investment *
-                    ((Math.pow(1 + monthlyRate, timePeriods) - 1) / monthlyRate) *
-                    (1 + monthlyRate);
-            } else {
-                const annualRateDecimal = annualRate / 100;
-                futureValue = investment *
-                    ((Math.pow(1 + annualRateDecimal, timePeriods) - 1) / annualRateDecimal) *
-                    (1 + annualRateDecimal);
-            }
-
-            const expectedReturns = futureValue - totalInvestment;
-
-            // Update results
-            animateValue('totalInvestment', totalInvestment);
-            animateValue('expectedReturns', expectedReturns);
-            animateValue('totalValue', futureValue);
-
-            // Update visualizations
-            const data = calculateInvestmentData(investment, annualRate, timePeriods);
-            updateTable(data);
-            updateChart(data);
-        }
-
-        // Calculate investment data for visualization
-        function calculateInvestmentData(investment, annualRate, totalPeriods) {
-            const data = {
-                periods: [],
-                investedAmount: [],
-                totalValue: [],
-                expectedReturns: []
-            };
-
-            const intervals = Math.min(20, totalPeriods);
-            const step = Math.ceil(totalPeriods / intervals);
-
-            for (let period = 1; period <= totalPeriods; period += step) {
-                const investedAmount = investment * period;
-                let futureValue;
-
-                if (currentFrequency === 'monthly') {
-                    const monthlyRate = (annualRate / 100) / 12;
-                    futureValue = investment *
-                        ((Math.pow(1 + monthlyRate, period) - 1) / monthlyRate) *
-                        (1 + monthlyRate);
-                } else {
-                    const annualRateDecimal = annualRate / 100;
-                    futureValue = investment *
-                        ((Math.pow(1 + annualRateDecimal, period) - 1) / annualRateDecimal) *
-                        (1 + annualRateDecimal);
-                }
-
-                const returns = futureValue - investedAmount;
-
-                data.periods.push(period);
-                data.investedAmount.push(Math.round(investedAmount));
-                data.totalValue.push(Math.round(futureValue));
-                data.expectedReturns.push(Math.round(returns));
-            }
-
-            return data;
-        }
-
-        // Animate value changes
-        function animateValue(elementId, targetValue) {
-            const element = document.getElementById(elementId);
-            if (!element) return;
-
-            const startValue = parseFloat(element.textContent.replace(/[^0-9.-]+/g, "")) || 0;
-            const duration = 500;
-            const steps = 30;
-            const increment = (targetValue - startValue) / steps;
-            let currentStep = 0;
-
-            const animate = () => {
-                currentStep++;
-                const currentValue = startValue + (increment * currentStep);
-                element.textContent = formatIndianCurrency(Math.round(currentValue));
-
-                if (currentStep < steps) {
-                    requestAnimationFrame(animate);
-                } else {
-                    element.textContent = formatIndianCurrency(Math.round(targetValue));
-                }
-            };
-
-            requestAnimationFrame(animate);
-        }
-
-        // Update table
-        function updateTable(data) {
-            const tbody = document.querySelector('#yearlyBreakdown tbody');
-            tbody.innerHTML = '';
-
-            data.periods.forEach((period, i) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-            <td class="text-center">
-                <span class="period-number">${period}</span>
-                <span class="period-label">${FREQUENCY_LABELS[currentFrequency]}</span>
-            </td>
-            <td class="amount-cell">${formatIndianCurrency(data.investedAmount[i])}</td>
-            <td class="amount-cell">${formatIndianCurrency(data.expectedReturns[i])}</td>
-            <td class="amount-cell">${formatIndianCurrency(data.totalValue[i])}</td>
+                UI.elements.breakdownTable.style.display = isHidden ? 'block' : 'none';
+                UI.elements.breakdownBtn.innerHTML = `
+            ${isHidden ? 'Hide' : 'View'} Detailed Breakdown 
+            <span class="button-icon">${isHidden ? '▲' : '▼'}</span>
         `;
 
-                row.style.animationDelay = `${i * 50}ms`;
-                row.classList.add('table-row-animate');
-
-                tbody.appendChild(row);
-            });
-        }
-
-        // Update chart
-        function updateChart(data) {
-            const ctx = document.getElementById('returnsChart').getContext('2d');
-
-            if (chart) {
-                chart.destroy();
+                if (isHidden) handlers.calculate();
             }
+        };
 
-            chart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.periods.map(period => `${period} ${FREQUENCY_LABELS[currentFrequency]}`),
-                    datasets: [
-                        {
-                            label: 'Invested Amount',
-                            data: data.investedAmount,
-                            borderColor: '#3da59c',
-                            backgroundColor: 'rgba(61, 165, 156, 0.1)',
-                            fill: true,
-                            tension: 0.4
-                        },
-                        {
-                            label: 'Total Value',
-                            data: data.totalValue,
-                            borderColor: '#2d7a73',
-                            backgroundColor: 'rgba(45, 122, 115, 0.1)',
-                            fill: true,
-                            tension: 0.4
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Investment Growth Over Time',
-                            font: { size: 16, weight: 'bold' },
-                            padding: 20,
-                            color: '#333'
-                        },
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                usePointStyle: true,
-                                padding: 20,
-                                font: { size: 12 }
-                            }
-                        },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            callbacks: {
-                                label: function (context) {
-                                    return `${context.dataset.label}: ${formatIndianCurrency(context.parsed.y)}`;
-                                }
-                            },
-                            backgroundColor: 'rgba(61, 165, 156, 0.8)',
-                            titleFont: { size: 14 },
-                            bodyFont: { size: 13 },
-                            padding: 12
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { font: { size: 11 } }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: value => formatIndianCurrency(value),
-                                font: { size: 11 }
-                            }
-                        }
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
-                    },
-                    animation: {
-                        duration: 1000,
-                        easing: 'easeInOutQuart'
-                    }
-                }
-            });
-        }
-
-        // Toggle breakdown table
-        function toggleBreakdown() {
-            const breakdownTable = document.getElementById('breakdownTable');
-            const btn = document.getElementById('viewBreakdownBtn');
-
-            if (breakdownTable.style.display === 'none' || !breakdownTable.style.display) {
-                breakdownTable.style.display = 'block';
-                breakdownTable.classList.add('animate-in');
-                btn.innerHTML = 'Hide Detailed Breakdown <span class="button-icon">▲</span>';
-                calculateSIP();
-            } else {
-                breakdownTable.classList.remove('animate-in');
-                breakdownTable.classList.add('animate-out');
-                setTimeout(() => {
-                    breakdownTable.style.display = 'none';
-                    breakdownTable.classList.remove('animate-out');
-                }, 300);
-                btn.innerHTML = 'View Detailed Breakdown <span class="button-icon">▼</span>';
-            }
-        }
-
-        // Initialize the calculator
+        // Initialize calculator
         function initializeCalculator() {
-            initializeFrequencyButtons();
-            initializeInputListeners();
-            document.getElementById('chartContainer').style.height = '400px';
-            updateTimeSlider();
-            calculateSIP();
-
-            // Add breakdown toggle listener
-            document.getElementById('viewBreakdownBtn').addEventListener('click', toggleBreakdown);
-
-            // Add window resize listener
-            window.addEventListener('resize', () => {
-                if (chart) {
-                    chart.resize();
-                }
+            // Set up frequency buttons
+            UI.elements.freqButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    UI.elements.freqButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    handlers.frequencyChange(btn.dataset.freq);
+                });
             });
+
+            // Set up input listeners
+            Object.values(UI.inputs).forEach(input => {
+                if (input) input.addEventListener('input', () => {
+                    updateUI.updateTimeLabel();
+                    handlers.calculate();
+                });
+            });
+
+            // Set up breakdown toggle
+            if (UI.elements.breakdownBtn) {
+                UI.elements.breakdownBtn.addEventListener('click', handlers.toggleBreakdown);
+            }
+
+            // Set up resize handler
+            window.addEventListener('resize', () => {
+                if (state.chart) state.chart.resize();
+            });
+
+            // Initial setup
+            UI.elements.chartCanvas.parentElement.style.height = '400px';
+            handlers.calculate();
         }
 
-        // Start the calculator when DOM is loaded
+        // Start calculator when DOM is loaded
         document.addEventListener('DOMContentLoaded', initializeCalculator);
     </script>
 </body>
