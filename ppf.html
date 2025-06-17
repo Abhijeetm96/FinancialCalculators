@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PPF Calculator</title>
+    <link rel="stylesheet" href="styles/common_styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -576,7 +577,7 @@ td.text-center {
                                 <th>Closing Balance</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="ppfBreakdown-tbody">
                             <!-- Table rows will be dynamically added here -->
                         </tbody>
                     </table>
@@ -911,6 +912,17 @@ function initializeCalculator() {
 // Add event listeners
 document.addEventListener('DOMContentLoaded', initializeCalculator);
 document.getElementById('viewBreakdownBtn').addEventListener('click', toggleBreakdown);
+    </script>
+    <script src="js/common_script.js"></script>
+    <script src="js/ppf_logic.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof FinancialCalculators !== 'undefined' && typeof FinancialCalculators.initializePpfPage === 'function') {
+                FinancialCalculators.initializePpfPage();
+            } else {
+                console.error('PPF Page: New calculator logic failed to load or initialize.');
+            }
+        });
     </script>
 </body>
 </html>

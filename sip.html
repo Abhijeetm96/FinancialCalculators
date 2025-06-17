@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIP Calculator</title>
+    <link rel="stylesheet" href="styles/common_styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -603,7 +604,7 @@
                                 <th>Total Value</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="sipBreakdown-tbody">
                             <!-- Table rows will be dynamically added here -->
                         </tbody>
                     </table>
@@ -896,6 +897,18 @@
 
         // Start calculator when DOM is loaded
         document.addEventListener('DOMContentLoaded', initializeCalculator);
+    </script>
+    <script src="js/common_script.js"></script>
+    <script src="js/sip_logic.js"></script>
+    <script>
+        // Ensure this runs after the page's original script, if any, and after common_script.js and sip_logic.js
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof FinancialCalculators !== 'undefined' && typeof FinancialCalculators.initializeSipPage === 'function') {
+                FinancialCalculators.initializeSipPage();
+            } else {
+                console.error('SIP Page: New calculator logic failed to load or initialize.');
+            }
+        });
     </script>
 </body>
 

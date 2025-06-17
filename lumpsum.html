@@ -4,22 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lumpsum Calculator</title>
+    <link rel="stylesheet" href="styles/common_styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-    --primary-color: #3da59c;
-    --primary-light: #4fbeb4;
-    --primary-dark: #2d7a73;
-    --text-primary: #333;
-    --text-secondary: #666;
-    --background-light: #f8f9fa;
-    --border-color: #e0e0e0;
-    --white: #ffffff;
-    --error-color: #dc3545;
-    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-}
+        /* Test comment */
+        /* Another test comment */
 
 * {
     margin: 0;
@@ -543,7 +532,7 @@ td.text-center {
                                 <th>Total Value</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="yearlyBreakdown-tbody">
                             <!-- Table rows will be dynamically added here -->
                         </tbody>
                     </table>
@@ -885,5 +874,17 @@ document.addEventListener('DOMContentLoaded', initializeCalculator);
 document.getElementById('viewBreakdownBtn').addEventListener('click', toggleBreakdown);
 
  </script>
+    <script src="js/common_script.js"></script>
+    <script src="js/lumpsum_logic.js"></script>
+    <script>
+        // Attempt to initialize the new logic.
+        // This relies on FinancialCalculators.initializeLumpsumPage being defined in lumpsum_logic.js
+        // and that it can correctly take over or co-exist with the old script.
+        if (typeof FinancialCalculators !== 'undefined' && typeof FinancialCalculators.initializeLumpsumPage === 'function') {
+            FinancialCalculators.initializeLumpsumPage();
+        } else {
+            console.error('Lumpsum Page: New calculator logic failed to load or initialize.');
+        }
+    </script>
 </body>
 </html>

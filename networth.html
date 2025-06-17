@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Net Worth Calculator</title>
+    <link rel="stylesheet" href="styles/common_styles.css">
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js for visualizations -->
@@ -716,7 +717,7 @@
                                 <th class="amount-cell">% of Total</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="networthBreakdown-tbody">
                             <!-- Dynamically populated -->
                         </tbody>
                     </table>
@@ -1151,6 +1152,17 @@
 
         // Start the calculator
         initialize();
+    </script>
+    <script src="js/common_script.js"></script>
+    <script src="js/networth_logic.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof FinancialCalculators !== 'undefined' && typeof FinancialCalculators.initializeNetworthPage === 'function') {
+                FinancialCalculators.initializeNetworthPage();
+            } else {
+                console.error('Networth Page: New calculator logic failed to load or initialize.');
+            }
+        });
     </script>
 </body>
 

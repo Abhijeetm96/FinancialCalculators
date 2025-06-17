@@ -843,5 +843,16 @@
             }
         });
     </script>
+    <script src="js/common_script.js"></script>
+    <script src="js/stepsip_logic.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof FinancialCalculators !== 'undefined' && typeof FinancialCalculators.initializeStepSipPage === 'function') {
+                FinancialCalculators.initializeStepSipPage();
+            } else {
+                console.error('Step SIP Page: New calculator logic failed to load or initialize.');
+            }
+        });
+    </script>
 </body>
 </html>

@@ -1525,6 +1525,17 @@
          updateTimestamp();
       });
    </script>
+    <script src="js/common_script.js"></script>
+    <script src="js/nps_logic.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof FinancialCalculators !== 'undefined' && typeof FinancialCalculators.initializeNpsPage === 'function') {
+                FinancialCalculators.initializeNpsPage();
+            } else {
+                console.error('NPS Page: New calculator logic failed to load or initialize.');
+            }
+        });
+    </script>
 </body>
 
 </html>
