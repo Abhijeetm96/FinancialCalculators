@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator Hub</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        header {
+            background-color: #f0f0f0;
+            padding: 1rem;
+            text-align: center;
+        }
+        main {
+            flex-grow: 1;
+            padding: 1rem;
+        }
+        .calculator-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+        .calculator-link-container {
+            border: 1px solid #ccc;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            width: 200px; /* Adjust as needed */
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+            text-decoration: none;
+            color: #333;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+
+        .calculator-link-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 4px 4px 10px rgba(0,0,0,0.15);
+        }
+
+        /* Media Queries for responsiveness */
+        @media (max-width: 768px) {
+            .calculator-link-container {
+                width: calc(50% - 2rem); /* Two columns on smaller screens */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .calculator-link-container {
+                width: 100%; /* Single column on very small screens */
+            }
+            header {
+                padding: 0.5rem;
+            }
+            main {
+                padding: 0.5rem;
+            }
+            .calculator-links {
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Calculator Hub</h1>
+    </header>
+    <main>
+        <div class="calculator-links">
+            <a href="lumpsum.html" class="calculator-link-container">Lumpsum Calculator</a>
+            <a href="networth.html" class="calculator-link-container">Net Worth Calculator</a>
+            <a href="nps.html" class="calculator-link-container">NPS Calculator</a>
+            <a href="ppf.html" class="calculator-link-container">PPF Calculator</a>
+            <a href="sip.html" class="calculator-link-container">SIP Calculator</a>
+            <a href="stepsip.html" class="calculator-link-container">Step SIP Calculator</a>
+            <a href="stepupsip.html" class="calculator-link-container">Step Up SIP Calculator</a>
+        </div>
+    </main>
+</body>
+</html>
