@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic Retirement Planning Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            background-color: #fd7e14; /* Orange color for Retirement Planning */
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: background-color 0.3s ease;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #e66a00;
+        }
+        #result-area {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            font-size: 17px;
+            color: #333;
+        }
+        #result-area p {
+            margin: 10px 0;
+        }
+        .notes {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #666;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 3px solid #fd7e14;
+        }
+        .notes ul {
+            margin: 5px 0 0 20px;
+            padding: 0;
+        }
+        .warning-message {
+            color: #856404;
+            background-color: #fff3cd;
+            border-color: #ffeeba;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        .error {
+            color: red;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Basic Retirement Planning Calculator</h1>
+
+        <div class="input-group">
+            <label for="currentAge">Current Age (Years)</label>
+            <input type="number" id="currentAge" placeholder="e.g., 30">
+            <div class="error" id="currentAgeError"></div>
+        </div>
+
+        <div class="input-group">
+            <label for="retirementAge">Planned Retirement Age (Years)</label>
+            <input type="number" id="retirementAge" placeholder="e.g., 60">
+            <div class="error" id="retirementAgeError"></div>
+        </div>
+
+        <div class="input-group">
+            <label for="currentMonthlyExpenses">Current Monthly Expenses (Post-Retirement Needs)</label>
+            <input type="number" id="currentMonthlyExpenses" placeholder="e.g., 50000">
+            <div class="error" id="expensesError"></div>
+        </div>
+
+        <div class="input-group">
+            <label for="inflationRate">Expected Average Annual Inflation Rate (%)</label>
+            <input type="number" id="inflationRate" placeholder="e.g., 6">
+            <div class="error" id="inflationRateError"></div>
+        </div>
+
+        <div class="input-group">
+            <label for="postRetirementReturnRate">Expected Avg. Post-Retirement Rate of Return (%) on Corpus</label>
+            <input type="number" id="postRetirementReturnRate" placeholder="e.g., 8">
+            <div class="error" id="returnRateError"></div>
+        </div>
+
+        <button onclick="calculateRetirementPlan()">Calculate Retirement Needs</button>
+
+        <div id="result-area" style="display: none;">
+            <p>Years to Retirement: <strong id="yearsToRetirementValue"></strong></p>
+            <p>Estimated Monthly Expenses at Retirement: <strong id="futureExpensesValue"></strong></p>
+            <p style="font-weight: bold; font-size: 1.1em;">Estimated Retirement Corpus Needed: <strong id="corpusNeededValue"></strong></p>
+            <div id="corpusWarning" class="warning-message" style="display:none;"></div>
+        </div>
+
+        <div class="notes">
+            <strong>Note:</strong>
+            <ul>
+                <li>This is a simplified model for basic estimation.</li>
+                <li>Corpus estimation assumes your investments generate returns as per the 'Post-Retirement Rate of Return'.</li>
+                <li>Actual needs may vary based on lifestyle, healthcare, and other unforeseen expenses.</li>
+                <li>It's recommended to consult a financial advisor for detailed retirement planning.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function validateNumericInput(value, fieldName, errorElementId, allowZero = false, isPercentage = false) {
+            const errorElement = document.getElementById(errorElementId);
+            let message = '';
+
+            if (isNaN(value)) {
+                message = fieldName + ' must be a number.';
+            } else if (!allowZero && value <= 0) {
+                message = fieldName + ' must be a positive number.';
+            } else if (value < 0) {
+                 message = fieldName + ' cannot be negative.';
+            } else if (isPercentage && value > 100) {
+                 message = fieldName + ' cannot exceed 100%.';
+            }
+
+
+            if (message) {
+                errorElement.textContent = message;
+                return false;
+            }
+            errorElement.textContent = '';
+            return true;
+        }
+
+        function calculateRetirementPlan() {
+            const currentAgeInput = document.getElementById('currentAge');
+            const retirementAgeInput = document.getElementById('retirementAge');
+            const currentExpensesInput = document.getElementById('currentMonthlyExpenses');
+            const inflationRateInput = document.getElementById('inflationRate');
+            const postRetirementReturnRateInput = document.getElementById('postRetirementReturnRate');
+
+            const resultDiv = document.getElementById('result-area');
+            const corpusWarningDiv = document.getElementById('corpusWarning');
+
+            // Clear previous errors and warnings
+            document.getElementById('currentAgeError').textContent = '';
+            document.getElementById('retirementAgeError').textContent = '';
+            document.getElementById('expensesError').textContent = '';
+            document.getElementById('inflationRateError').textContent = '';
+            document.getElementById('returnRateError').textContent = '';
+            corpusWarningDiv.style.display = 'none';
+            corpusWarningDiv.textContent = '';
+
+            const currentAge = parseInt(currentAgeInput.value);
+            const retirementAge = parseInt(retirementAgeInput.value);
+            const currentMonthlyExpenses = parseFloat(currentExpensesInput.value);
+            const inflationRate = parseFloat(inflationRateInput.value) / 100; // As decimal
+            const postRetirementReturnRate = parseFloat(postRetirementReturnRateInput.value) / 100; // As decimal
+
+            let isValid = true;
+            isValid &= validateNumericInput(currentAge, 'Current Age', 'currentAgeError');
+            isValid &= validateNumericInput(retirementAge, 'Retirement Age', 'retirementAgeError');
+            isValid &= validateNumericInput(currentMonthlyExpenses, 'Current Monthly Expenses', 'expensesError');
+            isValid &= validateNumericInput(parseFloat(inflationRateInput.value), 'Inflation Rate', 'inflationRateError', true, true);
+            isValid &= validateNumericInput(parseFloat(postRetirementReturnRateInput.value), 'Post-Retirement Return Rate', 'returnRateError', true, true);
+
+            if (isValid && retirementAge <= currentAge) {
+                document.getElementById('retirementAgeError').textContent = 'Retirement Age must be greater than Current Age.';
+                isValid = false;
+            }
+
+            if (!isValid) {
+                resultDiv.style.display = 'none';
+                return;
+            }
+
+            const yearsToRetirement = retirementAge - currentAge;
+            document.getElementById('yearsToRetirementValue').textContent = yearsToRetirement + (yearsToRetirement === 1 ? " year" : " years");
+
+            const futureMonthlyExpenses = currentMonthlyExpenses * Math.pow((1 + inflationRate), yearsToRetirement);
+            document.getElementById('futureExpensesValue').textContent = '₹ ' + futureMonthlyExpenses.toFixed(2);
+
+            let corpusNeeded;
+            const N_YEARS_POST_RETIREMENT = 25; // Assumed duration if returns don't beat inflation
+
+            if (postRetirementReturnRate > inflationRate) {
+                // Using perpetuity formula adjusted for inflation (Gordon Growth Model style)
+                corpusNeeded = (futureMonthlyExpenses * 12) / (postRetirementReturnRate - inflationRate);
+            } else {
+                corpusNeeded = futureMonthlyExpenses * 12 * N_YEARS_POST_RETIREMENT;
+                corpusWarningDiv.textContent = `Post-retirement returns do not significantly outpace inflation. Corpus calculated for ${N_YEARS_POST_RETIREMENT} years of post-retirement expenses (nominal). This may not be sustainable long-term.`;
+                corpusWarningDiv.style.display = 'block';
+            }
+
+            document.getElementById('corpusNeededValue').textContent = '₹ ' + corpusNeeded.toFixed(2);
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

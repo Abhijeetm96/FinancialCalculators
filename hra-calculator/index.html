@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRA Exemption Calculator (India)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .radio-group label {
+            font-weight: normal;
+            margin-right: 15px;
+        }
+        input[type="radio"], input[type="checkbox"] {
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+        button {
+            background-color: #007bff; /* Blue color for HRA */
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: background-color 0.3s ease;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #result-area {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            font-size: 16px; /* Slightly smaller for more content */
+            color: #333;
+        }
+        #result-area h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #0056b3;
+            text-align: center;
+        }
+        #result-area p {
+            margin: 8px 0;
+            padding-left: 10px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 8px;
+        }
+        #result-area p:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        #result-area .final-amount {
+            font-weight: bold;
+            color: #007bff;
+            font-size: 1.1em;
+        }
+         .error {
+            color: red;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>HRA Exemption Calculator</h1>
+
+        <div class="input-group radio-group">
+            <label>Input Period:</label>
+            <input type="radio" id="periodAnnual" name="inputPeriod" value="annual" checked>
+            <label for="periodAnnual">Annual</label>
+            <input type="radio" id="periodMonthly" name="inputPeriod" value="monthly">
+            <label for="periodMonthly">Monthly</label>
+        </div>
+
+        <div class="input-group">
+            <label for="basicSalary">Basic Salary</label>
+            <input type="number" id="basicSalary" placeholder="Enter basic salary">
+            <div class="error" id="basicSalaryError"></div>
+        </div>
+
+        <div class="input-group">
+            <label for="hraReceived">HRA Received</label>
+            <input type="number" id="hraReceived" placeholder="Enter HRA component of salary">
+            <div class="error" id="hraReceivedError"></div>
+        </div>
+
+        <div class="input-group">
+            <label for="actualRentPaid">Actual Rent Paid</label>
+            <input type="number" id="actualRentPaid" placeholder="Enter total rent paid">
+            <div class="error" id="rentPaidError"></div>
+        </div>
+
+        <div class="input-group">
+            <input type="checkbox" id="isMetroCity">
+            <label for="isMetroCity" style="font-weight:normal; display:inline;">Reside in a Metro City (Delhi, Mumbai, Kolkata, Chennai)?</label>
+        </div>
+
+        <button onclick="calculateHRA()">Calculate HRA Exemption</button>
+
+        <div id="result-area" style="display: none;">
+            <h3>HRA Exemption Calculation</h3>
+            <p>1. Actual HRA Received: <strong id="actualHraValue"></strong></p>
+            <p>2. Rent Paid Component (Rent Paid - 10% of Basic): <strong id="rentComponentValue"></strong></p>
+            <p>3. City Type Component (40%/50% of Basic): <strong id="cityComponentValue"></strong></p>
+            <hr>
+            <p class="final-amount">HRA Exemption Amount (Min of above three): <strong id="hraExemptionValue"></strong></p>
+            <p>Taxable HRA (HRA Received - Exemption): <strong id="taxableHraValue"></strong></p>
+        </div>
+    </div>
+
+    <script>
+        function validateNumericInput(value, fieldName, errorElementId, allowZero = false) {
+            const errorElement = document.getElementById(errorElementId);
+            let message = '';
+
+            if (isNaN(value)) {
+                message = fieldName + ' must be a number.';
+            } else if (!allowZero && value <= 0) {
+                message = fieldName + ' must be a positive number.';
+            } else if (value < 0) {
+                 message = fieldName + ' cannot be negative.';
+            }
+
+            if (message) {
+                errorElement.textContent = message;
+                return false;
+            }
+            errorElement.textContent = '';
+            return true;
+        }
+
+        function calculateHRA() {
+            const basicSalaryInput = document.getElementById('basicSalary');
+            const hraReceivedInput = document.getElementById('hraReceived');
+            const actualRentPaidInput = document.getElementById('actualRentPaid');
+            const isMetroCityInput = document.getElementById('isMetroCity');
+            const inputPeriod = document.querySelector('input[name="inputPeriod"]:checked').value;
+            const resultDiv = document.getElementById('result-area');
+
+            // Clear previous errors
+            document.getElementById('basicSalaryError').textContent = '';
+            document.getElementById('hraReceivedError').textContent = '';
+            document.getElementById('rentPaidError').textContent = '';
+
+            let basicSalary = parseFloat(basicSalaryInput.value);
+            let hraReceived = parseFloat(hraReceivedInput.value);
+            let actualRentPaid = parseFloat(actualRentPaidInput.value);
+
+            let isValid = true;
+            isValid &= validateNumericInput(basicSalary, 'Basic Salary', 'basicSalaryError');
+            isValid &= validateNumericInput(hraReceived, 'HRA Received', 'hraReceivedError', true); // HRA can be 0
+            isValid &= validateNumericInput(actualRentPaid, 'Actual Rent Paid', 'rentPaidError', true); // Rent can be 0
+
+            if (!isValid) {
+                resultDiv.style.display = 'none';
+                return;
+            }
+
+            // Convert to annual figures if monthly is selected
+            let annualBasicSalary = basicSalary;
+            let annualHraReceived = hraReceived;
+            let annualRentPaid = actualRentPaid;
+
+            if (inputPeriod === 'monthly') {
+                annualBasicSalary *= 12;
+                annualHraReceived *= 12;
+                annualRentPaid *= 12;
+            }
+
+            // Condition 1: Actual HRA received
+            const condition1 = annualHraReceived;
+
+            // Condition 2: Rent paid - 10% of Basic Salary
+            let condition2 = annualRentPaid - (0.10 * annualBasicSalary);
+            if (condition2 < 0) {
+                condition2 = 0; // Cannot be negative for exemption calculation
+            }
+
+            // Condition 3: City type component
+            const cityPercentage = isMetroCityInput.checked ? 0.50 : 0.40;
+            const condition3 = cityPercentage * annualBasicSalary;
+
+            // HRA Exemption: Minimum of the three conditions
+            const hraExemption = Math.min(condition1, condition2, condition3);
+
+            // Taxable HRA
+            const taxableHra = annualHraReceived - hraExemption;
+
+            // Display results
+            document.getElementById('actualHraValue').textContent = '₹ ' + condition1.toFixed(2);
+            document.getElementById('rentComponentValue').textContent = '₹ ' + condition2.toFixed(2);
+            document.getElementById('cityComponentValue').textContent = '₹ ' + condition3.toFixed(2);
+            document.getElementById('hraExemptionValue').textContent = '₹ ' + hraExemption.toFixed(2);
+            document.getElementById('taxableHraValue').textContent = '₹ ' + taxableHra.toFixed(2);
+
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
