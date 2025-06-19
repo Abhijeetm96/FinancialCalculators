@@ -5,470 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Net Worth Calculator</title>
+    <link rel="stylesheet" href="../styles.css">
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js for visualizations -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --primary-color: #3da59c;
-            --primary-light: #4fbeb4;
-            --primary-dark: #2d7a73;
-            --success-color: #3da59c;
-            --danger-color: #dc3545;
-            --text-primary: #333;
-            --text-secondary: #666;
-            --background: #f3f4f6;
-            --card-bg: #ffffff;
-            --border-color: #e5e7eb;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        }
-
-        body {
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-            min-height: 100vh;
-            padding: 20px;
-            color: var(--text-primary);
-            line-height: 1.5;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 15px;
-        }
-
-        .calculator-container {
-            background: var(--card-bg);
-            border-radius: 20px;
-            box-shadow: var(--shadow-lg);
-            overflow: hidden;
-            margin: 20px auto;
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        .calculator-header {
-            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-            color: white;
-            padding: 2.5rem 2rem;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .calculator-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1));
-            pointer-events: none;
-        }
-
-        .calculator-header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.75rem;
-            font-weight: 700;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .calculator-header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-
-        .calculator-content {
-            padding: 2rem;
-        }
-
-        .section {
-            background: #f8fafc;
-            border-radius: 16px;
-            padding: 1.75rem;
-            margin-bottom: 2rem;
-            transition: all 0.3s ease;
-            border: 1px solid var(--border-color);
-        }
-
-        .section:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .section-header {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding-bottom: 1rem;
-            margin-bottom: 1.5rem;
-            border-bottom: 2px solid var(--border-color);
-        }
-
-        .section-header i {
-            font-size: 1.75rem;
-            color: var(--primary-color);
-            background: rgba(61, 165, 156, 0.1);
-            padding: 0.5rem;
-            border-radius: 12px;
-        }
-
-        .section-header h2 {
-            color: var(--primary-color);
-            font-size: 1.5rem;
-            margin: 0;
-            font-weight: 600;
-        }
-
-        .input-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .input-group {
-            margin-bottom: 1.25rem;
-        }
-
-        .input-group label {
-            display: block;
-            color: var(--text-secondary);
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            font-size: 0.95rem;
-        }
-
-        .input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .input-wrapper i {
-            position: absolute;
-            left: 1rem;
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-        }
-
-        .input-field {
-            width: 100%;
-            padding: 0.875rem 1rem 0.875rem 2.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background-color: white;
-            color: var(--text-primary);
-            -moz-appearance: textfield;
-        }
-
-        .input-field::-webkit-outer-spin-button,
-        .input-field::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-
-        .input-field:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(61, 165, 156, 0.1);
-        }
-
-        .results-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1.5rem;
-            margin: 2rem 0;
-        }
-
-        .result-card {
-            background: white;
-            padding: 1.75rem;
-            border-radius: 16px;
-            text-align: center;
-            box-shadow: var(--shadow-sm);
-            transition: all 0.3s ease;
-            border: 1px solid var(--border-color);
-        }
-
-        .result-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .result-card h3 {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-
-        .result-value {
-            font-size: 2rem;
-            font-weight: 700;
-            line-height: 1.2;
-            transition: color 0.3s ease;
-        }
-
-        .result-value.positive {
-            color: var(--success-color);
-        }
-
-        .result-value.negative {
-            color: var(--danger-color);
-        }
-
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 2rem;
-            margin: 2rem 0;
-        }
-
-        .chart-container {
-            background: white;
-            padding: 1.75rem;
-            border-radius: 16px;
-            box-shadow: var(--shadow-sm);
-            position: relative;
-            transition: all 0.3s ease;
-            border: 1px solid var(--border-color);
-            min-height: 400px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .chart-container canvas {
-            width: 100% !important;
-            height: 100% !important;
-            max-height: 400px;
-        }
-
-        .breakdown-table {
-            background: white;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: var(--shadow-sm);
-            margin-top: 2rem;
-            border: 1px solid var(--border-color);
-        }
-
-        .table-header {
-            background: var(--primary-color);
-            color: white;
-            padding: 1.25rem 1.75rem;
-        }
-
-        .table-header h2 {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 1.25rem;
-            margin: 0;
-            font-weight: 600;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th,
-        td {
-            padding: 1.25rem 1.75rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        th {
-            background: #f8fafc;
-            font-weight: 600;
-            color: var(--text-primary);
-            font-size: 0.95rem;
-        }
-
-        .amount-cell {
-            text-align: right;
-            font-family: 'Courier New', monospace;
-            font-weight: 600;
-            font-size: 1rem;
-        }
-
-        .amount-cell.positive {
-            color: var(--success-color);
-        }
-
-        .amount-cell.negative {
-            color: var(--danger-color);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 1200px) {
-            .charts-grid {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
-            }
-
-            .chart-container {
-                min-height: 350px;
-            }
-
-            .chart-container canvas {
-                max-height: 350px;
-            }
-        }
-
-        @media (max-width: 992px) {
-            .input-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .calculator-header h1 {
-                font-size: 2rem;
-            }
-
-            .chart-container {
-                padding: 1rem;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .results-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .calculator-container {
-                margin: 10px 0;
-            }
-
-            .calculator-content {
-                padding: 1rem;
-            }
-
-            .section {
-                padding: 1.25rem;
-            }
-
-            .chart-container {
-                min-height: 300px;
-            }
-
-            .chart-container canvas {
-                max-height: 300px;
-            }
-
-            th,
-            td {
-                padding: 1rem;
-                font-size: 0.9rem;
-            }
-
-            .table-responsive {
-                overflow-x: auto;
-            }
-        }
-
-        @media (max-width: 480px) {
-            body {
-                padding: 10px;
-            }
-
-            .calculator-header h1 {
-                font-size: 1.75rem;
-            }
-
-            .calculator-header p {
-                font-size: 1rem;
-            }
-
-            .section-header h2 {
-                font-size: 1.25rem;
-            }
-
-            .result-value {
-                font-size: 1.5rem;
-            }
-
-            .input-field {
-                font-size: 0.95rem;
-                padding: 0.75rem 1rem 0.75rem 2.5rem;
-            }
-
-            .chart-container {
-                min-height: 250px;
-                padding: 0.75rem;
-            }
-
-            .chart-container canvas {
-                max-height: 250px;
-            }
-
-            th,
-            td {
-                padding: 0.75rem;
-                font-size: 0.85rem;
-            }
-        }
-
-        @media (max-width: 380px) {
-            .chart-container {
-                min-height: 200px;
-            }
-
-            .chart-container canvas {
-                max-height: 200px;
-            }
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Print styles */
-        @media print {
-            body {
-                background: none;
-            }
-
-            .calculator-container {
-                box-shadow: none;
-                margin: 0;
-            }
-
-            .chart-container {
-                break-inside: avoid;
-                page-break-inside: avoid;
-            }
-
-            .results-grid {
-                break-inside: avoid;
-                page-break-inside: avoid;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="../styles.css">
 </head>
 
 <body>
@@ -887,7 +429,7 @@
             Object.entries(totals.liabilitiesByCategory).forEach(([category, value]) => {
                 if (value > 0) {
                     labels.push(category);
-                    data.push(-value);
+                    data.push(-value); // Represent liabilities as negative for potential combined chart
                     colors.push(colorPalettes.liabilities[liabilityColorIndex % colorPalettes.liabilities.length]);
                     liabilityColorIndex++;
                 }
@@ -898,7 +440,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        data: data,
+                        data: data.map(Math.abs), // Use absolute values for doughnut chart
                         backgroundColor: colors,
                         borderColor: colors.map(color => color.replace('0.8', '1')),
                         borderWidth: 2,
@@ -937,8 +479,10 @@
                             callbacks: {
                                 label: function (context) {
                                     const value = Math.abs(context.raw);
-                                    const total = data.reduce((a, b) => a + Math.abs(b), 0);
-                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    const totalPositive = data.filter(d => d > 0).reduce((a,b) => a + b, 0);
+                                    const totalNegative = Math.abs(data.filter(d => d < 0).reduce((a,b) => a + b, 0));
+                                    const overallTotal = totalPositive + totalNegative; // Sum of absolute values for percentage
+                                    const percentage = ((value / overallTotal) * 100).toFixed(1);
                                     return `${context.label}: ${formatCurrency(value)} (${percentage}%)`;
                                 }
                             },
@@ -1080,12 +624,12 @@
             const tbody = document.querySelector('#breakdownTable tbody');
             tbody.innerHTML = '';
 
-            const total = totals.totalAssets + totals.totalLiabilities;
+            const grandTotal = totals.totalAssets + totals.totalLiabilities; // For percentage calculation
 
             // Add assets
             Object.entries(totals.assetsByCategory).forEach(([category, value]) => {
                 if (value > 0) {
-                    const percentage = ((value / total) * 100).toFixed(1);
+                    const percentage = grandTotal > 0 ? ((value / grandTotal) * 100).toFixed(1) : 0;
                     addTableRow(tbody, category, value, percentage, true);
                 }
             });
@@ -1097,7 +641,7 @@
             // Add liabilities
             Object.entries(totals.liabilitiesByCategory).forEach(([category, value]) => {
                 if (value > 0) {
-                    const percentage = ((value / total) * 100).toFixed(1);
+                    const percentage = grandTotal > 0 ? ((value / grandTotal) * 100).toFixed(1) : 0;
                     addTableRow(tbody, category, value, percentage, false);
                 }
             });
@@ -1134,7 +678,7 @@
         function initializeInputListeners() {
             document.querySelectorAll('.input-field').forEach(input => {
                 input.addEventListener('input', () => {
-                    if (input.value < 0) input.value = 0;
+                    if (input.value < 0) input.value = 0; // Ensure non-negative values
                     clearTimeout(calculationTimeout);
                     calculationTimeout = setTimeout(calculateAndUpdate, 300);
                 });
@@ -1146,11 +690,11 @@
         // Initialize calculator
         function initialize() {
             initializeInputListeners();
-            calculateAndUpdate();
+            calculateAndUpdate(); // Initial calculation on load
         }
 
         // Start the calculator
-        initialize();
+        document.addEventListener('DOMContentLoaded', initialize);
     </script>
 </body>
 
