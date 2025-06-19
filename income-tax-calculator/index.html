@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Income Tax Calculator (India - New Regime)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        button {
+            background-color: #28a745; /* Green color for tax calc */
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #result {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            font-size: 17px;
+            color: #333;
+        }
+        #result p {
+            margin: 8px 0;
+        }
+        .error {
+            color: red;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Income Tax Calculator (New Regime FY 2023-24)</h1>
+
+        <div class="input-group">
+            <label for="grossIncome">Gross Total Income (Annual)</label>
+            <input type="number" id="grossIncome" placeholder="Enter gross annual income">
+            <div class="error" id="grossIncomeError"></div>
+        </div>
+
+        <div class="input-group">
+            <label for="age">Age</label>
+            <input type="number" id="age" placeholder="Enter your age">
+            <div class="error" id="ageError"></div>
+        </div>
+
+        <p style="font-size: 0.9em; color: #666;">Note: A standard deduction of ₹50,000 is applied for salaried individuals under the new regime.</p>
+
+        <button onclick="calculateTax()">Calculate Income Tax</button>
+
+        <div id="result" style="display: none;">
+            <p>Taxable Income: <strong id="taxableIncomeValue"></strong></p>
+            <p>Income Tax: <strong id="incomeTaxValue"></strong></p>
+            <p>Health & Education Cess (4%): <strong id="cessValue"></strong></p>
+            <p style="font-weight: bold; font-size: 1.1em;">Total Tax Payable: <strong id="totalTaxValue"></strong></p>
+        </div>
+    </div>
+
+    <script>
+        function validateNumericInput(value, fieldName, errorElementId) {
+            const errorElement = document.getElementById(errorElementId);
+            if (isNaN(value) || value < 0) { // Allow 0 for income, but not for age
+                errorElement.textContent = fieldName + ' must be a non-negative number.';
+                return false;
+            }
+            errorElement.textContent = '';
+            return true;
+        }
+
+        function validateAge(age, errorElementId) {
+            const errorElement = document.getElementById(errorElementId);
+            if (isNaN(age) || age <= 0 || age > 120) {
+                errorElement.textContent = 'Please enter a valid age.';
+                return false;
+            }
+            errorElement.textContent = '';
+            return true;
+        }
+
+        function calculateTax() {
+            const grossIncomeInput = document.getElementById('grossIncome');
+            const ageInput = document.getElementById('age');
+            const resultDiv = document.getElementById('result');
+
+            // Clear previous errors
+            document.getElementById('grossIncomeError').textContent = '';
+            document.getElementById('ageError').textContent = '';
+
+            const grossIncome = parseFloat(grossIncomeInput.value);
+            const age = parseInt(ageInput.value);
+
+            let isValid = true;
+            isValid &= validateNumericInput(grossIncome, 'Gross Income', 'grossIncomeError');
+            isValid &= validateAge(age, 'ageError');
+
+            if (!isValid) {
+                resultDiv.style.display = 'none';
+                return;
+            }
+
+            // Standard Deduction (New Regime for salaried)
+            const standardDeduction = 50000;
+            let taxableIncome = grossIncome - standardDeduction;
+            if (taxableIncome < 0) {
+                taxableIncome = 0;
+            }
+
+            let incomeTax = 0;
+
+            // New Tax Regime Slabs (FY 2023-24 / AY 2024-25)
+            if (taxableIncome <= 300000) {
+                incomeTax = 0;
+            } else if (taxableIncome <= 600000) {
+                incomeTax = (taxableIncome - 300000) * 0.05;
+            } else if (taxableIncome <= 900000) {
+                incomeTax = 15000 + (taxableIncome - 600000) * 0.10;
+            } else if (taxableIncome <= 1200000) {
+                incomeTax = 15000 + 30000 + (taxableIncome - 900000) * 0.15; // 15000 + 30000 = 45000
+            } else if (taxableIncome <= 1500000) {
+                incomeTax = 15000 + 30000 + 45000 + (taxableIncome - 1200000) * 0.20; // 45000 + 45000 = 90000
+            } else {
+                incomeTax = 15000 + 30000 + 45000 + 60000 + (taxableIncome - 1500000) * 0.30; // 90000 + 60000 = 150000
+            }
+
+            // Tax Rebate u/s 87A if taxable income <= 7,00,000 (New Regime)
+            if (taxableIncome <= 700000) {
+                incomeTax = 0;
+            }
+
+            const cess = incomeTax * 0.04;
+            const totalTax = incomeTax + cess;
+
+            document.getElementById('taxableIncomeValue').textContent = '₹ ' + taxableIncome.toFixed(2);
+            document.getElementById('incomeTaxValue').textContent = '₹ ' + incomeTax.toFixed(2);
+            document.getElementById('cessValue').textContent = '₹ ' + cess.toFixed(2);
+            document.getElementById('totalTaxValue').textContent = '₹ ' + totalTax.toFixed(2);
+
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

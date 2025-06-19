@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fixed Deposit (FD) Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .tenure-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .tenure-input-group input[type="number"] {
+            flex-grow: 2;
+        }
+        .tenure-input-group select {
+            flex-grow: 1;
+        }
+        button {
+            background-color: #ffc107; /* Amber color for FD */
+            color: #333;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: background-color 0.3s ease;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #e0a800;
+        }
+        #result {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            font-size: 17px;
+            color: #333;
+        }
+        #result p {
+            margin: 8px 0;
+        }
+        .error {
+            color: red;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Fixed Deposit (FD) Calculator</h1>
+
+        <div class="input-group">
+            <label for="principalAmount">Principal Amount (P)</label>
+            <input type="number" id="principalAmount" placeholder="Enter principal amount">
+            <div class="error" id="principalError"></div>
+        </div>
+
+        <div class="input-group">
+            <label for="interestRate">Annual Interest Rate (R) %</label>
+            <input type="number" id="interestRate" placeholder="Enter annual interest rate">
+            <div class="error" id="rateError"></div>
+        </div>
+
+        <div class="input-group">
+            <label for="tenureValue">Tenure (T)</label>
+            <div class="tenure-input-group">
+                <input type="number" id="tenureValue" placeholder="Enter tenure">
+                <select id="tenureUnit">
+                    <option value="years">Years</option>
+                    <option value="months">Months</option>
+                    <option value="days">Days</option>
+                </select>
+            </div>
+            <div class="error" id="tenureError"></div>
+        </div>
+
+        <div class="input-group">
+            <label for="compoundingFrequency">Compounding Frequency (n)</label>
+            <select id="compoundingFrequency">
+                <option value="12">Monthly</option>
+                <option value="4">Quarterly</option>
+                <option value="2">Half-yearly</option>
+                <option value="1">Annually</option>
+            </select>
+        </div>
+
+        <button onclick="calculateFD()">Calculate Maturity</button>
+
+        <div id="result" style="display: none;">
+            <p>Maturity Amount (A): <strong id="maturityAmountValue"></strong></p>
+            <p>Total Interest Earned: <strong id="totalInterestValue"></strong></p>
+        </div>
+    </div>
+
+    <script>
+        function validateNumericInput(value, fieldName, errorElementId, allowZero = false) {
+            const errorElement = document.getElementById(errorElementId);
+            const check = allowZero ? (isNaN(value) || value < 0) : (isNaN(value) || value <= 0);
+            if (check) {
+                errorElement.textContent = fieldName + (allowZero ? ' must be a non-negative number.' : ' must be a positive number.');
+                return false;
+            }
+            errorElement.textContent = '';
+            return true;
+        }
+
+        function calculateFD() {
+            const principalInput = document.getElementById('principalAmount');
+            const rateInput = document.getElementById('interestRate');
+            const tenureInput = document.getElementById('tenureValue');
+            const tenureUnitInput = document.getElementById('tenureUnit');
+            const compoundingFreqInput = document.getElementById('compoundingFrequency');
+            const resultDiv = document.getElementById('result');
+
+            // Clear previous errors
+            document.getElementById('principalError').textContent = '';
+            document.getElementById('rateError').textContent = '';
+            document.getElementById('tenureError').textContent = '';
+
+            const P = parseFloat(principalInput.value);
+            const R = parseFloat(rateInput.value); // Annual rate in %
+            const T_value = parseFloat(tenureInput.value);
+            const T_unit = tenureUnitInput.value;
+            const n_compound = parseFloat(compoundingFreqInput.value);
+
+            let isValid = true;
+            isValid &= validateNumericInput(P, 'Principal Amount', 'principalError');
+            isValid &= validateNumericInput(R, 'Interest Rate', 'rateError', true); // Rate can be 0
+            isValid &= validateNumericInput(T_value, 'Tenure', 'tenureError');
+
+            if (!isValid) {
+                resultDiv.style.display = 'none';
+                return;
+            }
+
+            let t_years; // Tenure in years
+            if (T_unit === 'years') {
+                t_years = T_value;
+            } else if (T_unit === 'months') {
+                t_years = T_value / 12;
+            } else { // days
+                t_years = T_value / 365;
+            }
+
+            const r_decimal = R / 100; // Annual rate as decimal
+
+            // A = P * (1 + r/n)^(n*t)
+            const maturityAmount = P * Math.pow((1 + r_decimal / n_compound), (n_compound * t_years));
+            const totalInterest = maturityAmount - P;
+
+            if (isNaN(maturityAmount) || !isFinite(maturityAmount)) {
+                document.getElementById('maturityAmountValue').textContent = 'N/A';
+                document.getElementById('totalInterestValue').textContent = 'N/A (Please check inputs)';
+            } else {
+                document.getElementById('maturityAmountValue').textContent = '₹ ' + maturityAmount.toFixed(2);
+                document.getElementById('totalInterestValue').textContent = '₹ ' + totalInterest.toFixed(2);
+            }
+
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
